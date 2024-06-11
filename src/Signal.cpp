@@ -1,4 +1,5 @@
 #include "Signal.hpp"
+#include "Filter.hpp"
 #include <sstream>
 
 Signal::Signal(size_t size, int sample_frequency, complexd default_value)
@@ -46,8 +47,23 @@ size_t Signal::size() const {
     return m_buffer.size();
 }
 
+void Signal::resize(size_t new_size) {
+    if (new_size != m_buffer.size())
+        m_buffer.resize(new_size);
+}
+
+void Signal::clear() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        m_buffer[i] = m_defaul_value;
+    }
+}
+
 int Signal::getSampleFrequency() const {
     return m_sample_frequency;
+}
+
+void Signal::setDefaultValue(const complexd &default_value) {
+    m_defaul_value = default_value;
 }
 
 const complexd &Signal::getDefaulValue() const {
@@ -63,7 +79,7 @@ std::vector<complexd> &Signal::getBuffer() {
 }
 
 Signal Signal::operator-() {
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = -m_buffer[i];
     }
@@ -72,9 +88,11 @@ Signal Signal::operator-() {
 
 Signal Signal::operator+(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] + other.m_buffer[i];
     }
@@ -83,9 +101,11 @@ Signal Signal::operator+(const Signal &other) {
 
 Signal Signal::operator-(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] - other.m_buffer[i];
     }
@@ -94,9 +114,11 @@ Signal Signal::operator-(const Signal &other) {
 
 Signal Signal::operator*(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] * other.m_buffer[i];
     }
@@ -105,12 +127,16 @@ Signal Signal::operator*(const Signal &other) {
 
 Signal Signal::operator/(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         if (other.m_buffer[i] == complexd(0, 0)) {
-            throw std::invalid_argument("Division by zero");
+            std::stringstream ss;
+            ss << std::string(__FILE__) << ":" << int(__LINE__) << " Division by zero";
+            throw std::invalid_argument(ss.str());
         }
         result.m_buffer[i] = m_buffer[i] / other.m_buffer[i];
     }
@@ -118,43 +144,79 @@ Signal Signal::operator/(const Signal &other) {
 }
 
 Signal Signal::operator+(const complexd &c) {
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] + c;
     }
     return result;
 }
 
+Signal operator+(const complexd &c, const Signal &sig) {
+    Signal result(sig.size(), sig.getSampleFrequency());
+    for (size_t i = 0; i < sig.size(); i++) {
+        result[i] = sig[i] + c;
+    }
+    return result;
+}
+
 Signal Signal::operator-(const complexd &c) {
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] - c;
     }
     return result;
 }
 
+Signal operator-(const complexd &c, const Signal &sig) {
+    Signal result(sig.size(), sig.getSampleFrequency());
+    for (size_t i = 0; i < sig.size(); i++) {
+        result[i] = sig[i] - c;
+    }
+    return result;
+}
+
 Signal Signal::operator*(const complexd &c) {
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] * c;
     }
     return result;
 }
 
+Signal operator*(const complexd &c, const Signal &sig) {
+    Signal result(sig.size(), sig.getSampleFrequency());
+    for (size_t i = 0; i < sig.size(); i++) {
+        result[i] = sig[i] * c;
+    }
+    return result;
+}
+
 Signal Signal::operator/(const complexd &c) {
     if (c == complexd(0, 0)) {
-        throw std::invalid_argument("Division by zero");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Division by zero";
+        throw std::invalid_argument(ss.str());
     }
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = m_buffer[i] / c;
     }
     return result;
 }
 
+Signal operator/(const complexd &c, const Signal &sig) {
+    Signal result(sig.size(), sig.getSampleFrequency());
+    for (size_t i = 0; i < sig.size(); i++) {
+        result[i] = sig[i] / c;
+    }
+    return result;
+}
+
 Signal &Signal::operator+=(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
     for (size_t i = 0; i < m_buffer.size(); i++) {
         m_buffer[i] += other.m_buffer[i];
@@ -164,7 +226,9 @@ Signal &Signal::operator+=(const Signal &other) {
 
 Signal &Signal::operator-=(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
     for (size_t i = 0; i < m_buffer.size(); i++) {
         m_buffer[i] -= other.m_buffer[i];
@@ -174,7 +238,9 @@ Signal &Signal::operator-=(const Signal &other) {
 
 Signal &Signal::operator*=(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
     for (size_t i = 0; i < m_buffer.size(); i++) {
         m_buffer[i] *= other.m_buffer[i];
@@ -184,11 +250,15 @@ Signal &Signal::operator*=(const Signal &other) {
 
 Signal &Signal::operator/=(const Signal &other) {
     if (m_buffer.size() != other.m_buffer.size()) {
-        throw std::invalid_argument("Signals must be of the same size");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Signals must be of the same size";
+        throw std::invalid_argument(ss.str());
     }
     for (size_t i = 0; i < m_buffer.size(); i++) {
         if (other.m_buffer[i] == complexd(0, 0)) {
-            throw std::invalid_argument("Division by zero");
+            std::stringstream ss;
+            ss << std::string(__FILE__) << ":" << int(__LINE__) << " Division by zero";
+            throw std::invalid_argument(ss.str());
         }
         m_buffer[i] /= other.m_buffer[i];
     }
@@ -218,7 +288,9 @@ Signal &Signal::operator*=(const complexd &c) {
 
 Signal &Signal::operator/=(const complexd &c) {
     if (c == complexd(0, 0)) {
-        throw std::invalid_argument("Division by zero");
+        std::stringstream ss;
+        ss << std::string(__FILE__) << ":" << int(__LINE__) << " Division by zero";
+        throw std::invalid_argument(ss.str());
     }
     for (size_t i = 0; i < m_buffer.size(); i++) {
         m_buffer[i] /= c;
@@ -226,16 +298,113 @@ Signal &Signal::operator/=(const complexd &c) {
     return *this;
 }
 
-Signal Signal::abs() {
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+Signal &Signal::self_square() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] *= m_buffer[i];
+    }
+    return *this;
+}
+
+Signal Signal::square() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        result.m_buffer[i] = m_buffer[i]*m_buffer[i];
+    }
+    return result;
+}
+
+Signal &Signal::self_sqrt() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] = std::sqrt(m_buffer[i]);
+    }
+    return *this;
+}
+
+Signal Signal::sqrt() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        result.m_buffer[i] = std::sqrt(m_buffer[i]);
+    }
+    return result;
+}
+
+Signal &Signal::self_tan() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] = std::tan(m_buffer[i]);
+    }
+    return *this;
+}
+
+Signal Signal::tan() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        result.m_buffer[i] = std::tan(m_buffer[i]);
+    }
+    return result;
+}
+
+Signal &Signal::self_atan() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] = std::atan(m_buffer[i]);
+    }
+    return *this;
+}
+
+Signal Signal::atan() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        result.m_buffer[i] = std::atan(m_buffer[i]);
+    }
+    return result;
+}
+
+Signal &Signal::self_cos() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] = std::cos(m_buffer[i]);
+    }
+    return *this;
+}
+
+Signal Signal::cos() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        result.m_buffer[i] = std::cos(m_buffer[i]);
+    }
+    return result;
+}
+
+Signal &Signal::self_sin() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] = std::sin(m_buffer[i]);
+    }
+    return *this;
+}
+
+Signal Signal::sin() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+        result.m_buffer[i] = std::cos(m_buffer[i]);
+    }
+    return result;
+}
+
+Signal &Signal::self_abs() {
+    for (size_t i = 0; i < m_buffer.size(); i++) {
+         m_buffer[i] = std::abs(m_buffer[i]);
+    }
+    return *this;
+}
+
+Signal Signal::abs() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
     for (size_t i = 0; i < m_buffer.size(); i++) {
         result.m_buffer[i] = std::abs(m_buffer[i]);
     }
     return result;
 }
 
-Signal Signal::normalize() {
-    Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
+Signal Signal::normalize() const {
+    Signal result(m_buffer.size(), m_sample_frequency);
     complexd cmax = m_buffer[0];
 
     // Trouver la valeur maximale absolue dans le signal
@@ -254,7 +423,7 @@ Signal Signal::normalize() {
     return result;
 }
 
-complexd Signal::max() {
+complexd Signal::max() const {
     complexd cmax = m_buffer[0];
 
     // Trouver la valeur maximale absolue dans le signal
@@ -266,7 +435,7 @@ complexd Signal::max() {
     return cmax;
 }
 
-complexd Signal::min() {
+complexd Signal::min() const {
     complexd cmin = m_buffer[0];
 
     // Trouver la valeur maximale absolue dans le signal
@@ -287,8 +456,21 @@ void Signal::ceil(int precision) {
     }
 }
 
-void Signal::setWaveform(const Waveform &wf) {
+Signal &Signal::setWaveform(const Waveform &wf) {
     m_waveform = wf;
+    return *this;
+}
+
+Signal &Signal::setWaveform(WaveformType type, double amplitude, double frequency,
+    double phase, double offset, double delay, double duty_cycle) {
+    m_waveform.type = type;
+    m_waveform.amplitude = amplitude;
+    m_waveform.frequency = frequency;
+    m_waveform.phase = phase;
+    m_waveform.offset = offset;
+    m_waveform.delay = delay;
+    m_waveform.duty_cycle = duty_cycle;
+    return *this;
 }
 
 Waveform &Signal::getWaveform() {
@@ -299,9 +481,10 @@ void Signal::generate() {
     double sample_period = 1.0 / m_sample_frequency;
     double delay_samples = m_waveform.delay / 1000.0 * m_sample_frequency;
 
+    double t, value;
     for (size_t i = 0; i < m_buffer.size(); i++) {
-        double t = (i - delay_samples) * sample_period;
-        double value = 0;
+        t = (i - delay_samples) * sample_period;
+        value = 0;
 
         switch (m_waveform.type) {
             case WaveformType::SINUS:
@@ -361,17 +544,12 @@ void Signal::generate() {
     }
 }
 
-Signal Signal::demodulate(int local_oscillator_freq, bool sin_or_cos)
-{
-    Signal demodulate_signal(m_buffer.size(), m_sample_frequency, m_defaul_value);
-    for (size_t i = 0; i < m_buffer.size(); i++) {
-        double t = i * m_sample_frequency;
-        if (sin_or_cos == true)
-            demodulate_signal[i] = std::cos(2 * M_PI * local_oscillator_freq * t) * m_buffer[i];
-        else
-            demodulate_signal[i] = std::sin(2 * M_PI * local_oscillator_freq * t) * m_buffer[i];
+void Signal::generateAbitraryForm(std::function<complexd(double)> &equation) {
+    double t;
+    for (size_t i = 0; i < size(); i++) {
+        t = i * m_sample_frequency;
+        m_buffer[i] = equation(t);
     }
-    return demodulate_signal;
 }
 
 // Function to perform FFT recursively
@@ -425,4 +603,15 @@ Signal Signal::ifft() {
     Signal result(m_buffer.size(), m_sample_frequency, m_defaul_value);
     __fft(m_buffer.data(), result.m_buffer.data(), m_buffer.size(), true);
     return result;
+}
+
+
+Signal Signal::filter(BaseFilter &filter) {
+    Signal output(size(), m_sample_frequency);
+
+    for (size_t i = 0; i < size(); i++) {
+        output[i] = filter.eqdiff(m_buffer[i].real());
+    }
+
+    return output;
 }

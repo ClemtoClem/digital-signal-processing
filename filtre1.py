@@ -39,11 +39,11 @@ s_pb.append(0)
 for i in range(1, len(sig)):
     s_pb.append(s_pb[i-1]+Te/tau*(sig[i-1]-s_pb[i-1]))
 
-# Préparation du filtre de Butterworth en passe-bas
-b, a = signal.butter(4, fc/f_nyq, 'low', analog=False)
+# Préparation du filtre de Butterworth en passe-low
+b, a = signal.iirfilter(4, Wn=fc, fs=fe, btype="low", ftype="butter")
 
 # Application du filtre
-s_but_bp = signal.filtfilt(b, a, sig)
+s_but_pb = signal.filtfilt(b, a, sig)
 
 # ======== Passe haut ========
 # Préparation de la liste de sortie
@@ -55,7 +55,7 @@ for i in range(1, len(sig)):
     s_ph.append(s_ph[i-1]*(1-Te/tau)+sig[i]-sig[i-1])
 
 # Préparation du filtre de Butterworth en passe-haut
-b, a = signal.butter(4, fc/f_nyq, 'high', analog=False)
+b, a = signal.iirfilter(4, Wn=fc, fs=fe, btype="high", ftype="butter")
 
 # Application du filtre
 s_but_ph = signal.filtfilt(b, a, sig)
@@ -64,7 +64,7 @@ def plot_signals(axis):
     # Affichage du signal filtré
     axis[0].plot(x, sig, color='silver', label='Signal')
     axis[0].plot(x, s_pb, label='1er ordre')
-    axis[0].plot(x, s_but_bp, color='#cc0000', label='Butterworth')
+    axis[0].plot(x, s_but_pb, color='#cc0000', label='Butterworth')
     axis[0].set_title("Filtre passe-bas numérique")
 
     axis[1].plot(x, sig, color='silver', label='Signal')
@@ -78,7 +78,7 @@ def plot_frequency(axis):
     w = np.fft.fftfreq(N, d=Te)
 
     H_pb = np.fft.fft(s_pb, N)
-    H_but_b = np.fft.fft(s_but_bp, N)
+    H_but_b = np.fft.fft(s_but_pb, N)
     
     axis[0].plot(w[:N//2], 20*np.log10(np.abs(H_pb)[:N//2]), label='1er ordre')
     axis[0].plot(w[:N//2], 20*np.log10(np.abs(H_but_b)[:N//2]), color='#cc0000', label='Butterworth')

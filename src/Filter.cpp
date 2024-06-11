@@ -1,399 +1,450 @@
 #include "Filter.hpp"
 #include <algorithm>
+#include <numeric>
+#include "Signal.hpp"
 
-static int relative_degree(const std::vector<complexd> &zeros, const std::vector<complexd> &poles) {
-    int degree = poles.size() - zeros.size();
-    if (degree < 0)
-        throw std::invalid_argument("Improper transfer function. Must have at least as many poles as zeros.");
-    return degree;
+IIRFilter::IIRFilter() : mIsSetup(false) {}
+
+IIRFilter::~IIRFilter() {
+    // Destructor logic if needed (automatic cleanup of vectors)
 }
 
-static void lowpassToLowpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double wo) {
-    // Calculer le degré relatif
-    int degree = relative_degree(zeros, poles);
+bool IIRFilter::set(int order, int fc1, int fc2, int fs, FilterGabarit gabarit, AnalogFilter analogFilter, int rp, int rs)
+{
+    if (order < 1) {
+        std::cerr << "Warning: L'ordre du filtre doit être supérieur ou égal à 1.\n";
+        return false;
+    }
+    if (fc1 < 0 || fc2 < 0) {
+        std::cerr << "Warning: Les fréquences de coupures doivent être positives.\n";
+        return false;
+    }
+    if (fc1 >= fc2 && (gabarit == FilterGabarit::BAND_PASS || gabarit == FilterGabarit::BAND_STOP)) {
+        std::cerr << "Warning: la fréquence de coupure fc1 doit être inférieur à la fréquence de coupre fc2.\n";
+        return false;
+    }
 
-    // Transformer les pôles et les zéros en les multipliant par wo
-    for (auto &zero : zeros) zero *= wo;
-    for (auto &pole : poles) pole *= wo;
+    mOrder = order;
+    mFc1 = fc1;
+    mFc2 = fc2;
+    mFs = fs;
+    mGabarit = gabarit;
+    mAnalogFilter = analogFilter;
+    mRp = rp; // passband ripple      (Chebyshev I, Chebyshev II & elliptic filter)
+    mRs = rs; // stopband attenuation (Chebyshev II & elliptic filter)
 
-    // Ajuster le gain
-    k *= std::pow(wo, degree);
+    mIsSetup = false;
+    return true;
 }
 
-static void lowpassToHighpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double wo) {
-    // Calculer le degré relatif
-    int degree = relative_degree(zeros, poles);
-
-    // Transformer les pôles et les zéros pour passe-haut
-    for (auto &zero : zeros) zero = wo / zero;
-    for (auto &pole : poles) pole = wo / pole;
-
-    // Ajouter des zéros à l'origine pour les zéros à l'infini
-    for (int i = 0; i < degree; ++i) zeros.push_back(0.0);
-
-    // Compenser la variation de gain
-    std::complex<double> prod_z = 1.0;
-    for (const auto &zero : zeros) {
-        if (zero != 0.0) {
-            prod_z *= -zero;
-        }
-    }
-
-    std::complex<double> prod_p = 1.0;
-    for (const auto &pole : poles) {
-        prod_p *= -pole;
-    }
-
-    k *= std::real(prod_z / prod_p);
+void IIRFilter::reset() {
+    // Reset memory x[n] and y[n] buffers
+    _xMem.resize(mOrder+1, 0.0);
+    _yMem.resize(mOrder+1, 0.0);
 }
 
-static void lowpassToBandpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double wo, double bw) {
-    // Calculer le degré relatif
-    int degree = relative_degree(zeros, poles);
-
-    // Transformer les pôles et les zéros pour passe-bande
-    std::vector<complexd> z_bp, p_bp;
-
-    for (const auto &zero : zeros) {
-        complexd z_lp = zero * (bw / 2.0);
-        z_bp.push_back(z_lp + std::sqrt(z_lp * z_lp - wo * wo));
-        z_bp.push_back(z_lp - std::sqrt(z_lp * z_lp - wo * wo));
-    }
-
-    for (const auto &pole : poles) {
-        complexd p_lp = pole * (bw / 2.0);
-        p_bp.push_back(p_lp + std::sqrt(p_lp * p_lp - wo * wo));
-        p_bp.push_back(p_lp - std::sqrt(p_lp * p_lp - wo * wo));
-    }
-
-    // Ajouter des zéros à l'origine pour les zéros à l'infini
-    for (int i = 0; i < degree; ++i) z_bp.push_back(0.0);
-
-    // Mettre à jour les vecteurs de zéros et de pôles
-    zeros = z_bp;
-    poles = p_bp;
-
-    // Compenser la variation de gain
-    k *= std::pow(bw, degree);
-}
-
-static void lowpassToBandStop(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double wo, double bw) {
-    // Invert to a highpass filter with desired bandwidth
-    std::vector<complexd> z_hp(zeros.size()), p_hp(poles.size());
-    for (size_t i = 0; i < zeros.size(); ++i) {
-        z_hp[i] = (bw / 2.0) / zeros[i];
-    }
-    for (size_t i = 0; i < poles.size(); ++i) {
-        p_hp[i] = (bw / 2.0) / poles[i];
-    }
-
-    // Duplicate poles and zeros and shift from baseband to +wo and -wo
-    std::vector<complexd> z_bs, p_bs;
-    for (size_t i = 0; i < z_hp.size(); ++i) {
-        z_bs.push_back(z_hp[i] + sqrt(z_hp[i] * z_hp[i] - wo * wo));
-        z_bs.push_back(z_hp[i] - sqrt(z_hp[i] * z_hp[i] - wo * wo));
-    }
-    for (size_t i = 0; i < p_hp.size(); ++i) {
-        p_bs.push_back(p_hp[i] + sqrt(p_hp[i] * p_hp[i] - wo * wo));
-        p_bs.push_back(p_hp[i] - sqrt(p_hp[i] * p_hp[i] - wo * wo));
-    }
-
-    // Move any zeros that were at infinity to the center of the stopband
-    int degree = poles.size() - zeros.size();
-    for (int i = 0; i < degree; ++i) {
-        z_bs.push_back(std::complex<double>(0.0, wo));
-        z_bs.push_back(std::complex<double>(0.0, -wo));
-    }
-
-    // Cancel out gain change caused by inversion
-    std::complex<double> prod_z = 1.0, prod_p = 1.0;
-    for (const auto &zero : zeros) prod_z *= -zero;
-    for (const auto &pole : poles) prod_p *= -pole;
-    k *= std::real(prod_z / prod_p);
-}
-
-/* =========================================================================================== */
-
-// return numerator and denominator
-void polynomial_transfer(const std::vector<complexd> &zeros, const std::vector<complexd> &poles, double k, std::vector<double> &numerator, std::vector<double> &denominator) {
-    int num_zeros = zeros.size();
-    int num_poles = poles.size();
-
-    // Calculating the numerator polynomial coefficients
-    if (num_zeros > 1) {
-        numerator.resize(num_zeros + 1);
-        for (int i = 0; i < num_zeros; ++i) {
-            std::vector<double> temp(num_zeros + 1, 0.0);
-            temp[i + 1] = 1.0;
-            for (int j = 0; j < num_zeros; ++j) {
-                if (j != i) {
-                    for (int k = num_zeros; k > 0; --k) {
-                        temp[k] = temp[k] * -zeros[j].real() + temp[k - 1];
-                    }
-                    temp[0] *= -zeros[j].real();
-                }
-            }
-            for (int k = 0; k <= num_zeros; ++k) {
-                numerator[k] += k * k * temp[k];
-            }
-        }
-    } else if (num_zeros == 1) {
-        numerator.resize(2);
-        numerator[0] = 0.0;
-        numerator[1] = k * (-zeros[0].real());
-    } else {
-        numerator.resize(1);
-        numerator[0] = k;
-    }
-
-    // Calculating the denominator polynomial coefficients
-    denominator.resize(num_poles + 1);
-    denominator[0] = 1.0;
-    for (int i = 0; i < num_poles; ++i) {
-        for (int j = num_poles; j > 0; --j) {
-            denominator[j] = denominator[j] * -poles[i].real() + denominator[j - 1];
-        }
-        denominator[0] *= -poles[i].real();
-    }
-}
-
-/* =========================================================================================== */
-
-// Forward filtering function
-Signal forward_filter(const Signal &signal, const std::vector<double> &numerator, const std::vector<double> &denominator) {
-    int num_signal = signal.size();
-    int num_numerator = numerator.size();
-    int num_denominator = denominator.size();
-
-    Signal result(signal.size(), signal.getSampleFrequency(), 0.0);
-
-    for (int i = num_numerator - 1; i < num_signal; ++i) {
-        double sum = 0.0;
-        for (int j = 0; j < num_numerator; ++j) {
-            int idx = i - j;
-            if (idx >= 0) {
-                sum += numerator[j] * signal[idx].real();
-            }
-        }
-        for (int j = 1; j < num_denominator; ++j) {
-            int idx = i - j;
-            if (idx >= 0) {
-                sum -= denominator[j] * result[idx].real();
-            }
-        }
-        result[i].real(sum / denominator[0]);
-    }
-
-    return result;
-}
-
-
-// Backward filtering function
-Signal backward_filter(const Signal &signal, const std::vector<double> &numerator, const std::vector<double> &denominator) {
-    int num_signal = signal.size();
-    int num_numerator = numerator.size();
-    int num_denominator = denominator.size();
-
-    Signal result(signal.size(), signal.getSampleFrequency(), 0.0);
-
-    for (int i = num_signal - num_numerator; i >= 0; --i) {
-        double sum = 0.0;
-        for (int j = 0; j < num_numerator; ++j) {
-            sum += numerator[j] * signal[i + j].real();
-        }
-        for (int j = 1; j < num_denominator; ++j) {
-            sum -= denominator[j] * result[i + j].real();
-        }
-        result[i].real(sum / denominator[0]);
-    }
-
-    return result;
-}
-
-/* =========================================================================================== */
-
-
-void IIRFilter::butterworthLowPass(int order, double fc, int fs) {
-    // Initialisation des coefficients à zéro
-    m_numerator.clear();
-    m_denominator.clear();
-
-    // Calcul des pôles du filtre Butterworth
-    std::vector<std::complex<double>> poles;
-    for (int i = 1; i <= order; ++i) {
-        double theta = M_PI * (2.0 * i + order - 1) / (2.0 * order);
-        std::complex<double> pole(-sin(theta), cos(theta));
-        poles.push_back(pole);
-    }
-
-    // Calcul des coefficients du numérateur (b) en multipliant les termes (s - p) pour chaque pôle
-    m_numerator.push_back(1.0);
-    for (const auto& pole : poles) {
-        std::vector<double> temp;
-        temp.push_back(1.0);
-        temp.push_back(-2.0 * pole.real());
-        temp.push_back(pole.real() * pole.real() + pole.imag() * pole.imag());
-        m_numerator = convolve(m_numerator, temp);
-    }
-
-    // Calcul des coefficients du dénominateur (a) à partir des pôles
-    m_denominator = std::vector<double>(order + 1, 0.0);
-    m_denominator[0] = 1.0;
-    for (const auto& pole : poles) {
-        std::vector<double> temp;
-        temp.push_back(1.0);
-        temp.push_back(-2.0 * pole.real());
-        temp.push_back(pole.real() * pole.real() + pole.imag() * pole.imag());
-        m_denominator = convolve(m_denominator, temp);
-    }
-
-    // Normalisation des coefficients du numérateur par le premier coefficient du dénominateur
-    double norm_factor = m_denominator[0];
-    for (auto& coef : m_numerator) {
-        coef /= norm_factor;
-    }
-    for (auto& coef : m_denominator) {
-        coef /= norm_factor;
-    }
-
-    // Configuration terminée
-    m_isSetup = true;
-}
-
-void IIRFilter::butterworthHighPass(int order, double fc, int fs) {
-    // Calcul de la fréquence de Nyquist
-    double f_nyq = fs / 2.0;
-
-    // Conversion de la fréquence de coupure en rapport à la fréquence de Nyquist
-    double fc_ratio = fc / f_nyq;
-
-    // Calcul des coefficients du filtre Butterworth
-    double theta_c = M_PI * fc_ratio;
-    double d = 1.0 / std::tan(theta_c / 2.0);
-    double d_square = d * d;
-
-    // Calcul des coefficients du polynôme de Butterworth
-    m_numerator.resize(order + 1, 0.0);
-    m_denominator.resize(order + 1, 0.0);
-
-    m_numerator[0] = 1.0;
-
-    for (int i = 1; i <= order / 2; ++i) {
-        double theta = M_PI * (2 * i + order - 1) / (2.0 * order);
-        double beta = 0.5 * (1.0 - std::sin(theta)) / (1.0 + std::sin(theta));
-        double gamma = (0.5 + beta) * std::cos(theta);
-
-        m_numerator[i] = gamma / (d_square + gamma);
-        m_numerator[order - i] = m_numerator[i];
-        m_denominator[i] = -2.0 * d * std::cos(M_PI * (2 * i + order - 1) / (2.0 * order)) / (1.0 + beta * (1.0 - d_square));
-        m_denominator[order - i] = -m_denominator[i];
-    }
-
-    // Configuration terminée
-    m_isSetup = true;
-}
-
-void IIRFilter::butterworthBandPass(int order, double fc1, double fc2, int fs) {
-    // Calcul de la fréquence de Nyquist
-    double f_nyq = fs / 2.0;
-
-    // Conversion des fréquences de coupure en rapport à la fréquence de Nyquist
-    double fc1_ratio = fc1 / f_nyq;
-    double fc2_ratio = fc2 / f_nyq;
-
-    // Calcul des coefficients du filtre Butterworth passe-bande
-    double wc1 = 2.0 * M_PI * fc1_ratio;
-    double wc2 = 2.0 * M_PI * fc2_ratio;
-    double wc_ratio = wc2 - wc1;
-    double wc_prod = wc1 * wc2;
-    double sqrt_wc_prod = sqrt(wc_prod);
-
-    // Calcul des coefficients du polynôme de Butterworth
-    m_numerator.resize(order + 1, 0.0);
-    m_denominator.resize(order + 1, 0.0);
-
-    m_numerator[0] = sqrt_wc_prod;
-
-    for (int i = 1; i <= order / 2; ++i) {
-        double theta = M_PI * (2 * i + order - 1) / (2.0 * order);
-        double beta = 0.5 * (1.0 - std::sin(theta)) / (1.0 + std::sin(theta));
-        double gamma = (0.5 + beta) * std::cos(theta);
-
-        m_numerator[i] = wc_prod / (gamma + wc_prod);
-        m_numerator[order - i] = m_numerator[i];
-        m_denominator[i] = -2.0 * wc_ratio * std::cos(M_PI * (2 * i + order - 1) / (2.0 * order)) / (1.0 + beta * (1.0 - wc_prod));
-        m_denominator[order - i] = -m_denominator[i];
-    }
-
-    // Configuration terminée
-    m_isSetup = true;
-}
-
-void IIRFilter::butterworthBandStop(int order, double fc1, double fc2, int fs) {
-    // Normalisation des fréquences de coupure
-    double wc1 = 2.0 * M_PI * fc1 / fs;
-    double wc2 = 2.0 * M_PI * fc2 / fs;
-
-    // Calcul des pôles et des zéros pour le filtre de Butterworth en passe-bande
-    std::vector<complexd> zeros;
-    std::vector<complexd> poles;
-    double k = 1.0;
-
-    for (int i = 1; i <= order; ++i) {
-        double theta = M_PI * (2 * i - 1) / (2.0 * order);
-        complexd pole1 = -sin(theta) / 2.0 + complexd(0.0, cos(theta)) * sqrt(3.0) / 2.0;
-        complexd pole2 = -sin(theta) / 2.0 - complexd(0.0, cos(theta)) * sqrt(3.0) / 2.0;
-        poles.push_back(exp(complexd(0.0, wc1)) * pole1);
-        poles.push_back(exp(complexd(0.0, wc1)) * pole2);
-        poles.push_back(exp(complexd(0.0, wc2)) * pole1);
-        poles.push_back(exp(complexd(0.0, wc2)) * pole2);
-    }
-
-    // Transformations de fréquence pour obtenir la bande d'arrêt
-    lowpassToBandStop(zeros, poles, k, wc1, wc2 - wc1);
-
-    // Calcul des coefficients a_ et b_
-    polynomial_transfer(zeros, poles, k, m_numerator, m_denominator);
-
-    // Configuration terminée
-    m_isSetup = true;
-}
-
-Signal IIRFilter::filter(const Signal& input) {
-    if (!m_isSetup) {
-        throw std::runtime_error("Filter is not set up.");
-    }
-
-    // Création d'une copie de l'entrée pour stocker le signal filtré
-    Signal filtered_signal = input;
-
-    // Application du filtrage en avant
-    filtered_signal = forward_filter(filtered_signal, m_numerator, m_denominator);
-
-    // Inversion du signal filtré
-    std::reverse(filtered_signal.getBuffer().begin(), filtered_signal.getBuffer().end());
-
-    // Application du filtrage en avant sur le signal inversé
-    filtered_signal = forward_filter(filtered_signal, m_numerator, m_denominator);
-
-    // Inversion du signal filtré à nouveau
-    std::reverse(filtered_signal.getBuffer().begin(), filtered_signal.getBuffer().end());
-
-    // Retourner le signal filtré
-    return filtered_signal;
-}
-
-// Méthode pour afficher les coefficients du filtre (à des fins de débogage)
 void IIRFilter::printCoefficients() {
-    std::cout << "Numerator coefficients (b): ";
-    for (const auto& coef : m_numerator) {
-        std::cout << coef << " ";
+    std::cout << "a coefficients: ";
+    for (const auto& coeff : _a) {
+        std::cout << coeff << " ";
     }
     std::cout << std::endl;
 
-    std::cout << "Denominator coefficients (a): ";
-    for (const auto& coef : m_denominator) {
-        std::cout << coef << " ";
+    std::cout << "b coefficients: ";
+    for (const auto& coeff : _b) {
+        std::cout << coeff << " ";
     }
     std::cout << std::endl;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Méthode 1 */
+
+void IIRFilter::setup() {
+    if (!mIsSetup) {
+
+        switch (mAnalogFilter) {
+            case AnalogFilter::BESSEL:
+                //BesselAnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::BUTTERWORTH:
+                ButterworthCoefficients();
+                break;
+            case AnalogFilter::CHEBYSHEV1:
+                //Chebyshev1AnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::CHEBYSHEV2:
+                //Chebyshev2AnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::ELLIPTIC:
+                //EllipticAnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            default:
+                throw std::invalid_argument("Unknown analog filter type");
+        }
+
+        mIsSetup = true;
+    }
+}
+
+Signal IIRFilter::filtering(const Signal &input) {
+    if (mIsSetup == false) {
+        throw std::invalid_argument("Filter is not set up");
+    }
+
+    Signal output(input.size(), mFs);
+    for (size_t i = 0; i < input.size(); i++) {
+        output[i] = _b[0] * input[i];
+        for (size_t j = 1; j < 3*mOrder; j++) {
+            if (i >= j) {
+                output[i] += (_b[j] * input[i - j]) - (_a[j] * output[i - j]);
+            }
+        }
+    }
+    
+    mIsSetup = true;
+    return output;
+}
+
+void IIRFilter::ButterworthCoefficients()
+{
+    double wc1 = 2 * M_PI * mFc1 / mFs;
+    double wc2 = 2 * M_PI * mFc2 / mFs;
+    double B, W0;
+
+    if (mGabarit == FilterGabarit::BAND_PASS || mGabarit == FilterGabarit::BAND_STOP) {
+        B = wc2 - wc1;
+        W0 = sqrt(wc1 * wc2);
+    }
+
+    // Variables intermédiaires pour les coefficients
+    double a0, a1, a2, b0, b1, b2;
+    double a0_num, a1_num, a2_num;
+
+    _a.resize(3 * mOrder);
+    _b.resize(3 * mOrder);
+
+    bool stable = true;
+
+    for (int i = 0; i < mOrder; i++) {
+        double theta = M_PI * (2.0 * i + 1.0) / (2.0 * mOrder);
+        double pole_re = -sin(theta);
+        double pole_im = cos(theta);
+
+        if (mGabarit == FilterGabarit::LOW_PASS) { // Passe-bas
+            double k = tan(wc1 / 2.0);
+            a0 = 1.0 + sqrt(2.0) * k + k * k;
+            a1 = 2.0 * (k * k - 1.0);
+            a2 = 1.0 - sqrt(2.0) * k + k * k;
+            b0 = k * k;
+            b1 = 2.0 * b0;
+            b2 = b0;
+        } else if (mGabarit == FilterGabarit::HIGH_PASS) { // Passe-haut
+            double k = tan(wc1 / 2.0);
+            a0 = 1.0 + sqrt(2.0) * k + k * k;
+            a1 = 2.0 * (k * k - 1.0);
+            a2 = 1.0 - sqrt(2.0) * k + k * k;
+            b0 = 1.0;
+            b1 = -2.0;
+            b2 = 1.0;
+        } else if (mGabarit == FilterGabarit::BAND_PASS) { // Passe-bande
+            double k1 = 2 * tan(B / 2.0);
+            double k2 = W0 * W0;
+            a0 = k2 + k1 * pole_re + pole_re * pole_re + pole_im * pole_im;
+            a1 = 2.0 * (pole_re * pole_re + pole_im * pole_im - k2);
+            a2 = k2 - k1 * pole_re + pole_re * pole_re + pole_im * pole_im;
+            b0 = k1;
+            b1 = 0.0;
+            b2 = -k1;
+        } else if (mGabarit == FilterGabarit::BAND_STOP) { // Coupe-bande
+            double k1 = 2 * tan(B / 2.0);
+            double k2 = W0 * W0;
+            a0 = 1.0 + k1 * pole_re + k2;
+            a1 = 2.0 * (k2 - 1.0);
+            a2 = 1.0 - k1 * pole_re + k2;
+            b0 = 1.0;
+            b1 = -2.0 * (1.0 - k2);
+            b2 = 1.0;
+        }
+
+        // Vérifier la stabilité (pour les types de filtre autres que passe-bas et passe-haut)
+        if (mGabarit == FilterGabarit::BAND_PASS || mGabarit == FilterGabarit::BAND_STOP) {
+            double zero_re = -cos(theta);
+            double zero_im = sin(theta);
+            double zero_radius = sqrt(zero_re * zero_re + zero_im * zero_im);
+            if (zero_radius >= 1.0) {
+                stable = false;
+                break; // Sortir de la boucle si le filtre est instable
+            }
+        }
+
+        // Normalisation des coefficients
+        a0_num = a0;
+        a1_num = a1 / a0_num;
+        a2_num = a2 / a0_num;
+
+        _b[3 * i] = b0 / a0_num;
+        _b[3 * i + 1] = b1 / a0_num;
+        _b[3 * i + 2] = b2 / a0_num;
+
+        _a[3 * i] = 1.0;
+        _a[3 * i + 1] = a1_num;
+        _a[3 * i + 2] = a2_num;
+    }
+
+    if (!stable) {
+        throw std::invalid_argument("Le filtre est instable pour les paramètres donnés");
+    }
+}
+
+
+
+/* -------------------------------------------------------------------------- */
+/* Méthode 2 */
+
+void ButterworthAnalogPrototype(int N, std::vector<complexd> &z, std::vector<complexd> &p, double &k) {
+    p.clear();
+    for (int i = 0; i < N; ++i) {
+        double theta = M_PI * (2 * i + 1) / (2 * N);
+        complexd pole = std::polar(1.0, theta);
+        p.push_back(pole);
+    }
+    k = 1;
+}
+
+void TransformLowpassToLowpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped) {
+    for (complexd &z : zeros) {
+        z *= warped;
+    }
+    for (complexd &p : poles) {
+        p *= warped;
+    }
+    int degree = poles.size() - zeros.size();
+    k *= pow(warped, degree);
+}
+
+void TransformLowpassToHighpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped) {
+    complexd mulZ = 1.0;
+    for (complexd &z : zeros) {
+        mulZ *= -z;
+        z = warped / z;
+    }
+    complexd mulP = 1.0;
+    for (complexd &p : poles) {
+        mulP *= -p;
+        p = warped / p;
+    }
+    //int degree = poles.size() - zeros.size();
+    k *= std::real(mulZ / mulP);
+}
+
+void TransformLowpassToBandpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped1, double warped2) {
+    double bw = warped2 - warped1;
+    double wo = sqrt(warped1 * warped2);
+    int degree = poles.size() - zeros.size();
+
+    std::vector<complexd> z_bp, p_bp;
+    for (const auto &z : zeros) {
+        z_bp.push_back(z * bw / 2.0);
+    }
+    for (const auto &p : poles) {
+        p_bp.push_back(p * bw / 2.0);
+    }
+
+    std::vector<complexd> z_final, p_final;
+    for (const auto &z : z_bp) {
+        complexd sqrt_term = std::sqrt(z * z - wo * wo);
+        z_final.push_back(z + sqrt_term);
+        z_final.push_back(z - sqrt_term);
+    }
+    for (const auto &p : p_bp) {
+        complexd sqrt_term = std::sqrt(p * p - wo * wo);
+        p_final.push_back(p + sqrt_term);
+        p_final.push_back(p - sqrt_term);
+    }
+
+    for (int i = 0; i < degree; ++i) {
+        z_final.push_back(0.0);
+    }
+
+    k *= pow(bw, degree);
+    zeros = std::move(z_final);
+    poles = std::move(p_final);
+}
+
+
+void TransformLowpassToBandStop(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped1, double warped2) {
+    double bw = warped2 - warped1;
+    double wo = sqrt(warped1 * warped2);
+    int degree = poles.size() - zeros.size();
+
+    std::vector<complexd> z_hp, p_hp;
+    for (const auto &z : zeros) {
+        z_hp.push_back((bw / 2.0) / z);
+    }
+    for (const auto &p : poles) {
+        p_hp.push_back((bw / 2.0) / p);
+    }
+
+    std::vector<complexd> z_final, p_final;
+    for (const auto &z : z_hp) {
+        complexd sqrt_term = std::sqrt(z * z - wo * wo);
+        z_final.push_back(z + sqrt_term);
+        z_final.push_back(z - sqrt_term);
+    }
+    for (const auto &p : p_hp) {
+        complexd sqrt_term = std::sqrt(p * p - wo * wo);
+        p_final.push_back(p + sqrt_term);
+        p_final.push_back(p - sqrt_term);
+    }
+
+    for (int i = 0; i < degree; ++i) {
+        z_final.push_back(complexd(0.0, wo));
+        z_final.push_back(complexd(0.0, -wo));
+    }
+
+    k *= std::real(std::accumulate(poles.begin(), poles.end(), complexd(1.0), 
+                      [=](const complexd &accum, const complexd &pole) { return accum * (-pole); }) /
+                   std::accumulate(zeros.begin(), zeros.end(), complexd(1.0), 
+                      [=](const complexd &accum, const complexd &zero) { return accum * (-zero); }));
+
+    zeros = std::move(z_final);
+    poles = std::move(p_final);
+}
+
+void IIRBilinearTransformation(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double fs) {
+    int degree = poles.size() - zeros.size();
+    double fs2 = 2.0 * fs;
+
+    std::vector<complexd> z_transformed, p_transformed;
+    complexd mulZ = 1.0;
+    for (const auto &z : zeros) {
+        mulZ *= (complexd(fs2) - z);
+        z_transformed.push_back((fs2 + z) / (fs2 - z));
+    }
+    complexd mulP = 1.0;
+    for (const auto &p : poles) {
+        mulP *= (complexd(fs2) - p);
+        p_transformed.push_back((fs2 + p) / (fs2 - p));
+    }
+    for (int i = 0; i < degree; ++i) {
+        z_transformed.push_back(complexd(-1.0, 0.0));
+    }
+
+    k *= std::real(mulZ / mulP);
+    zeros = std::move(z_transformed);
+    poles = std::move(p_transformed);
+}
+
+
+void poly(const std::vector<complexd> &roots, std::vector<double> &coeffs) {
+    coeffs[0] = 1.0;
+    for (const auto &root : roots) {
+        std::vector<double> new_coeffs(coeffs.size() + 1);
+        for (size_t i = 0; i < coeffs.size(); ++i) {
+            new_coeffs[i] -= root.real() * coeffs[i];
+            new_coeffs[i + 1] += coeffs[i];
+        }
+        coeffs = std::move(new_coeffs);
+    }
+}
+
+void PolynomialTransfer(const std::vector<complexd> &zeros, const std::vector<complexd> &poles, double k, std::vector<double> &b, std::vector<double> &a) {
+    poly(zeros, b);
+    for (auto &coeff : b) {
+        coeff *= k;
+    }
+    poly(poles, a);
+
+    auto are_conjugates = [](const std::vector<complexd> &roots) {
+        std::vector<complexd> pos_roots, neg_roots;
+        for (const auto &root : roots) {
+            if (root.imag() > 0) pos_roots.push_back(root);
+            else if (root.imag() < 0) neg_roots.push_back(std::conj(root));
+        }
+        if (pos_roots.size() != neg_roots.size()) return false;
+        std::sort(pos_roots.begin(), pos_roots.end(), [](const complexd &a, const complexd &b) { return std::arg(a) < std::arg(b); });
+        std::sort(neg_roots.begin(), neg_roots.end(), [](const complexd &a, const complexd &b) { return std::arg(a) < std::arg(b); });
+        return std::equal(pos_roots.begin(), pos_roots.end(), neg_roots.begin());
+    };
+
+    if (are_conjugates(zeros)) {
+        for (auto &coeff : b) coeff = std::real(coeff);
+    }
+    if (are_conjugates(poles)) {
+        for (auto &coeff : a) coeff = std::real(coeff);
+    }
+}
+
+void IIRFilter::setup2() {
+    if (!mIsSetup) {
+        // Reset coefficient buffers
+        _a.resize(mOrder+1, 0.0);
+        _b.resize(mOrder+1, 0.0);
+        // Reset zeros, poles and gian
+        _z.clear();
+        _p.clear();
+        _k = 0;
+
+        switch (mAnalogFilter) {
+            case AnalogFilter::BESSEL:
+                //BesselAnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::BUTTERWORTH:
+                ButterworthAnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::CHEBYSHEV1:
+                //Chebyshev1AnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::CHEBYSHEV2:
+                //Chebyshev2AnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            case AnalogFilter::ELLIPTIC:
+                //EllipticAnalogPrototype(mOrder, _z, _p, _k);
+                break;
+            default:
+                throw std::invalid_argument("Unknown analog filter type");
+        }
+
+        double fs = 2.0;
+        double warped1 = 2.0 * fs* tan(M_PI * mFc1 / fs);
+        double warped2 = 2.0 * fs* tan(M_PI * mFc2 / fs);
+
+        if (mGabarit == FilterGabarit::LOW_PASS) {
+            TransformLowpassToLowpass(_z, _p, _k, warped1);
+        } else if (mGabarit == FilterGabarit::HIGH_PASS) {
+            TransformLowpassToHighpass(_z, _p, _k, warped1);
+        } else if (mGabarit == FilterGabarit::LOW_PASS) {
+            TransformLowpassToBandpass(_z, _p, _k, warped1, warped2);
+        } else if (mGabarit == FilterGabarit::HIGH_PASS) {
+            TransformLowpassToBandStop(_z, _p, _k, warped1, warped2);
+        }
+
+        IIRBilinearTransformation(_z, _p, _k, fs);
+        PolynomialTransfer(_z, _p, _k, _a, _b);
+
+        mIsSetup = true;
+    }
+}
+
+double IIRFilter::eqdiff(double x) {
+    if (mIsSetup) {
+        _xMem[0] = x;
+        double y = 0.0;
+        for (int i = 0; i <= mOrder; ++i) {
+            y += _b[i] * _xMem[i];
+            if (i > 0) {
+                y -= _a[i] * _yMem[i];
+            }
+        }
+        for (int i = mOrder; i > 0; --i) {
+            _xMem[i] = _xMem[i - 1];
+            _yMem[i] = _yMem[i - 1];
+        }
+        _yMem[0] = y;
+        return y;
+    } else {
+        return x;
+    }
 }

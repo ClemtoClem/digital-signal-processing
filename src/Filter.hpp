@@ -1,50 +1,102 @@
-#ifndef __FILTER_HPP
-#define __FILTER_HPP
-
-#include <iostream>
-#include <cmath>
-#include <complex>
 #include <vector>
+#include <complex>
+#include <cmath>
 #include <stdexcept>
-#include "Signal.hpp"
+#include <iostream>
 
+class Signal;
 
-class IIRFilter {
+using complexd = std::complex<double>;
+
+enum class FilterGabarit {
+    LOW_PASS,
+    HIGH_PASS,
+    BAND_PASS,
+    BAND_STOP,
+};
+
+enum class AnalogFilter {
+    BESSEL,      // IIR Bessel /Thomsonfilter design
+    BUTTERWORTH, // IIR Butterworth filter design
+    CHEBYSHEV1,  // IIR Chebyshev Type I filter design
+    CHEBYSHEV2,  // IIR Chebyshev Type II filter design
+    ELLIPTIC,    // IIR Cauer/Elliptic filter design
+};
+
+// classe abstraire d'un filtre
+class BaseFilter {
 public:
-    IIRFilter() : m_numerator(), m_denominator(), m_isSetup(false) {}
+    virtual bool set(int order, int fc1, int fc2, int fs, FilterGabarit gabarit, AnalogFilter analogFilter, int rp = 0, int rs = 0) = 0;
+    virtual void setup() = 0;
+    virtual void reset() = 0;
+    virtual Signal filtering(const Signal &input) = 0;
+    virtual double eqdiff(double x) = 0;
+    virtual void printCoefficients() = 0;
+};
 
-    void butterworthLowPass(int order, double fc, int fs);;
+class IIRFilter: public BaseFilter {
+public:
+    IIRFilter();
+    ~IIRFilter();
 
-    void butterworthHighPass(int order, double fc, int fs);
+    // paramétrage du filtre
+    bool set(int order, int fc1, int fc2, int fs, FilterGabarit gabarit, AnalogFilter analogFilter, int rp = 0, int rs = 0);
+    
 
-    void butterworthBandPass(int order, double fc1, double fc2, int fs);
-
-    void butterworthBandStop(int order, double fc1, double fc2, int fs);
-
-    Signal filter(const Signal& input);
+    void reset();
 
     // Méthode pour afficher les coefficients du filtre (à des fins de débogage)
     void printCoefficients();
 
+    /* ----- Méthode 1 ----- */
+
+    // calcul des coefficients
+    void setup();
+    
+    Signal filtering(const Signal &input);
+
+    /* ----- Méthode 2 ----- */
+
+    // calcul des coefficients
+    void setup2();
+
+    // calcul de y(n) par application de l‘équation aux différences
+    double eqdiff(double x);
+
 private:
+    void ButterworthCoefficients(); /* < Méthode 1 */
 
-    // Méthode de convolution de deux vecteurs
-    std::vector<double> convolve(const std::vector<double>& x, const std::vector<double>& y) {
-        int m = x.size();
-        int n = y.size();
-        int p = m + n - 1;
-        std::vector<double> result(p, 0.0);
-        for (int i = 0; i < p; ++i) {
-            for (int j = std::max(0, i - n + 1); j <= std::min(i, m - 1); ++j) {
-                result[i] += x[j] * y[i - j];
-            }
-        }
-        return result;
-    }
+    bool mIsSetup;
 
-    std::vector<double> m_numerator; // Coefficients du numérateur
-    std::vector<double> m_denominator; // Coefficients du dénominateur
-    bool m_isSetup; // Indicateur de configuration
+    int mOrder;
+    int mFc1, mFc2;
+    int mFs; // Sample frequency
+    int mRp; // passband ripple
+    int mRs; // stopband attenuation
+    FilterGabarit mGabarit;
+    AnalogFilter mAnalogFilter;
+
+    std::vector<double> _a, _b;
+    std::vector<complexd> _z, _p;
+    double _k; // gain
+    std::vector<double> _xMem, _yMem;
 };
 
-#endif // __FILTER_HPP
+
+/* ------------------------------------------------------------------------ */
+/* Méthode 2 */
+
+// Return (z,p,k) for analog prototype of Nth-order Butterworth filter
+void ButterworthAnalogPrototype(int N, std::vector<complexd> &z, std::vector<complexd> &p, double &k);
+
+void TransformLowpassToLowpass(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped);
+
+void TransformLowpassToHighpass(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped);
+
+void TransformLowpassToBandpass(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped1, double warped2);
+
+void TransformLowpassToBandStop(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped1, double warped2);
+
+void IIRBilinearTransformation(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double fs);
+
+void PolynomialTransfer(const std::vector<complexd> &z, const std::vector<complexd> &p, double k, std::vector<double> &a, std::vector<double> &b);

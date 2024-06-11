@@ -38,13 +38,43 @@ bool CSV_File::read(const std::string& filename) {
 }
 
 bool CSV_File::write(const std::string& filename) {
+    if (m_signals.empty()) return false;
+
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: Cannot open file " << filename << std::endl;
         return false;
     }
 
-    file << sample_frequency << std::endl;
+    file << "time,";
+
+    size_t maxSize = m_signals[0]->size();
+    for (size_t s = 0; s < m_signals.size(); s++) {
+        if (m_signals[s]->size() > maxSize) maxSize = m_signals[s]->size();
+        file << m_names[s];
+        if (s < m_signals.size() -1) file << ",";
+    }
+    file << std::endl;
+    double t;
+    for (size_t i = 0; i < maxSize; i++) {
+        t = (double) i/sample_frequency;
+        file << t << ",";
+        for (size_t s = 0; s < m_signals.size(); s++) {
+            std::string str_real = std::to_string((*m_signals[s])[i].real());
+            std::string str_imag = std::to_string(abs((*m_signals[s])[i].imag()));
+            if (i < m_signals[s]->size() && str_real != "-nan" && str_real != "nan" && str_imag != "-nan"  && str_imag != "nan") {
+                file << str_real;
+                if ((*m_signals[s])[i].imag() > 0) file << "+" << str_real << "j";
+                else if ((*m_signals[s])[i].imag() < 0) file << "-" << (-(*m_signals[s])[i].imag()) << "j";
+            } else {
+                file << "0";
+            }
+            if (s < m_signals.size() -1) file << ",";
+        }
+        if (i < maxSize) file << std::endl;
+    }
+
+    /*file << sample_frequency << std::endl;
     for (size_t i = 0; i < m_signals.size(); i++) {
         file << m_names[i] << " " << m_signals[i]->size() << " ";
         for (size_t j = 0; j < m_signals[i]->size(); j++) {
@@ -53,7 +83,7 @@ bool CSV_File::write(const std::string& filename) {
         }
         if (i < m_signals.size()-1) file << std::endl;
     }
-
+*/
     file.close();
     return true;
 }
