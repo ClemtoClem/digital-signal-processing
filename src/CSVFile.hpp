@@ -18,7 +18,7 @@ public:
     std::vector<Signal> readSignals(double samplingFrequency);
 
     // Method to write signals to a CSV file
-    void writeSignals(const std::vector<Signal> &signals);
+    void writeSignals(const std::vector<Signal> &signals, bool time_or_freq_axis = false);
 
     // Method to append a single signal to an existing CSV file
     void appendSignal(const std::vector<Signal> &signals);

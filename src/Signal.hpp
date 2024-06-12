@@ -52,6 +52,8 @@ public:
     // Retourne la fréquence d'échantillonnage
     double getSamplingFrequency() const;
 
+    std::vector<double> getRealBuffer() const;
+
     /* ------------------------------- */
 
     // Surcharge de l'opérateur d'addition
@@ -274,11 +276,14 @@ public:
     
     /* ------------------------------- */
 
-    // Fonction pour effectuer la transformée de Fourier discrète (DFT) et générer le spectre
+    // Fonction pour effectuer la transformée de Fourier discrète  rapide(DFT) et générer le spectre
     Signal DFT() const;
 
-    // Fonction pour effectuer la transformée de Fourier inverse (IDFT) et reconstruire le signal
-    Signal IDFT(const std::vector<std::complex<double>>& spectrum) const;
+    // Fonction pour effectuer la transformée de Fourier inverse rapide (IDFT) et reconstruire le signal
+    Signal IDFT() const;
+
+    // Générer un axe fréquentiel en fonction de la fréquence d'échantillonnage
+    void generateFrequencyAxis();
 
     /* ------------------------------- */
     // Fonction pour afficher le signal

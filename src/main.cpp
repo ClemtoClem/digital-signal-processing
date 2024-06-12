@@ -4,7 +4,7 @@
 #include "Filter.hpp"
 #include "Demodulator.hpp"
 
-const int SAMPLE_FREQUENCY = 250e6/64;
+const int SAMPLE_FREQUENCY = 250e6/16;
 const int SIGNAL_SIZE = 16384;
 
 void test_demodulate() {
@@ -41,7 +41,7 @@ void test_demodulate() {
         IIRFilter iir_filter;
 
         /* Filtre pass bas */
-        iir_filter.set(4, 1e3, 0, SAMPLE_FREQUENCY, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
+        iir_filter.set(4, 20e3, 0, SAMPLE_FREQUENCY, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
         iir_filter.setup();
         std::cout << "Filtre passe bas :\n";
         iir_filter.printCoefficients();
@@ -53,25 +53,26 @@ void test_demodulate() {
         dem.setup();
         dem.demodulate(signal_output, signal_demAmpli, signal_demPhase);
 
-        //DFT_signal_demAmpli = signal_demAmpli.DFT();
-        //DFT_signal_demPhase = signal_demPhase.DFT();
+        DFT_signal_output   = signal_output.DFT();
+        DFT_signal_demAmpli = signal_demAmpli.DFT();
+        DFT_signal_demPhase = signal_demPhase.DFT();
 
         std::cout << "Sauvgarde des signaux" << std::endl;
 
-        CSVFile outFile("test.csv");
+        CSVFile outFile("./data/test.csv");
         std::vector<Signal> outSignals;
         outSignals.emplace_back(signal_output);
         outSignals.emplace_back(signalLP);
         outSignals.emplace_back(signal_demAmpli);
         outSignals.emplace_back(signal_demPhase);
-        outFile.writeSignals(outSignals);
+        outFile.writeSignals(outSignals, false); // with time axis
 
-        CSVFile outFileDFT("test_DFT.csv");
+        CSVFile outFileDFT("./data/test_DFT.csv");
         std::vector<Signal> outSignalsDFT;
         outSignalsDFT.emplace_back(DFT_signal_output);
         outSignalsDFT.emplace_back(DFT_signal_demAmpli);
         outSignalsDFT.emplace_back(DFT_signal_demPhase);
-        outFileDFT.writeSignals(outSignalsDFT);
+        outFileDFT.writeSignals(outSignalsDFT, true); // with frequency axis
 
         std::cout << "Test success finish\n";
     } catch (std::exception &e) {

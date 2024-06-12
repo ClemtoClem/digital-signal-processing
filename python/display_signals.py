@@ -31,7 +31,7 @@ def plot_signals(ax, signals: dict):
 
     for signal_name, signal_data in signals.items():
         print(signal_name)
-        if signal_name.lower() != "time":
+        if signal_name != "time":
             ax.plot(signals["time"], np.real(signal_data), label=signal_name)  # Afficher l'amplitude absolue
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Amplitude')
@@ -41,17 +41,16 @@ def plot_signals(ax, signals: dict):
 
 # Fonction pour afficher les FFT avec des axes logarithmiques
 def plot_fft_signals(ax_mag, ax_phase, fft_signals):
-    if len(fft_signals) == 0 or "time" not in fft_signals.keys():
+    if len(fft_signals) == 0 or "freq" not in fft_signals.keys():
         return
 
-    sample_frequency = 1/(fft_signals["time"][1] - fft_signals["time"][0])
+    sample_frequency = 1/(fft_signals["freq"][1] - fft_signals["freq"][0])
     for signal_name, signal_data in fft_signals.items():
-        if signal_name is ["signal", "tempA_fter", "tempA"]:
-            freqs = np.fft.fftfreq(len(signal_data), d=1/sample_frequency)
+        if signal_name != "freq":
             magnitude_spectrum = np.abs(np.imag(signal_data))
             phase_spectrum = np.angle(np.imag(signal_data))
-            ax_mag.semilogx(freqs, magnitude_spectrum, label=signal_name)
-            ax_phase.semilogx(freqs, phase_spectrum, label=signal_name)
+            ax_mag.semilogx(fft_signals["freq"], magnitude_spectrum, label=signal_name)
+            ax_phase.semilogx(fft_signals["freq"], phase_spectrum, label=signal_name)
 
     ax_mag.set_xlabel('Frequency (Hz)')
     ax_mag.set_ylabel('Magnitude')

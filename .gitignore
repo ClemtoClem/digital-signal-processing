@@ -1,10 +1,8 @@
 /.vscode
-/display_fft.py
-/filter2.py
-/fir.py
-/fir2.py
-/iir.py
-/iir2.py
-/temps
+/python/filter2.py
+/python/fir.py
+/python/fir2.py
+/python/iir.py
+/python/iir2.py
 /build
 /bin

@@ -41,6 +41,13 @@ double Signal::getSamplingFrequency() const {
     return samplingFrequency;
 }
 
+std::vector<double> Signal::getRealBuffer() const {
+    std::vector<double> realBuffer(this->size());
+    for (size_t i=0; i<this->size(); i++)
+        realBuffer[i] = (*this)[i].real();
+    return realBuffer;
+}
+
 /* ------------------------------- */
 
 Signal Signal::operator+(const Signal& other) const {
@@ -326,25 +333,32 @@ std::complex<double> Signal::max() const {
     if (this->empty()) {
         throw std::runtime_error("Signal is empty");
     }
-    return *std::max_element(this->begin(), this->end(), [](const std::complex<double>& a, const std::complex<double>& b) {
-        return std::abs(a) < std::abs(b);
-    });
+    std::complex<double> maxElem = (*this)[0];
+    for (size_t i = 0; i<this->size(); i++) {
+        if (maxElem.real() < (*this)[i].real()) maxElem = (*this)[i];
+    }
+    return maxElem;
 }
 
 std::complex<double> Signal::min() const {
     if (this->empty()) {
         throw std::runtime_error("Signal is empty");
     }
-    return *std::min_element(this->begin(), this->end(), [](const std::complex<double>& a, const std::complex<double>& b) {
-        return std::abs(a) < std::abs(b);
-    });
+    std::complex<double> minElem = (*this)[0];
+    for (size_t i = 0; i<this->size(); i++) {
+        if (minElem.real() > (*this)[i].real()) minElem = (*this)[i];
+    }
+    return minElem;
 }
 
 std::complex<double> Signal::mean() const {
     if (this->empty()) {
         throw std::runtime_error("Signal is empty");
     }
-    std::complex<double> sum = std::accumulate(this->begin(), this->end(), std::complex<double>(0.0, 0.0));
+    std::complex<double> sum = 0;
+    for (size_t i = 0; i<this->size(); i++) {
+        sum += (*this)[i];
+    }
     return sum / static_cast<double>(this->size());
 }
 
@@ -355,33 +369,96 @@ Signal Signal::DFT() const
     const size_t N = size();
     Signal spectrum(N, samplingFrequency);
 
-    for (size_t k = 0; k < N; ++k) {
-        std::complex<double> sum(0.0, 0.0);
-        for (size_t n = 0; n < N; ++n) {
-            double theta = 2.0 * M_PI * k * n / N;
-            sum += at(n) * std::exp(std::complex<double>(0.0, -theta));
+    // Bit-reversal permutation
+    size_t n = N;
+    size_t bits = 0;
+    while (n >>= 1) ++bits;
+
+    vector<size_t> reversed(N);
+    for (size_t i = 0; i < N; ++i) {
+        size_t j = 0;
+        for (size_t k = 0; k < bits; ++k) {
+            if (i & (1 << k)) j |= (1 << (bits - 1 - k));
         }
-        spectrum[k] = sum;
+        reversed[i] = j;
+    }
+
+    // Copy input data to spectrum with bit-reversed order
+    for (size_t i = 0; i < N; ++i) {
+        spectrum[reversed[i]] = (*this)[i];
+    }
+
+    // FFT algorithm
+    for (size_t s = 1; s <= bits; ++s) {
+        size_t m = 1 << s;
+        std::complex<double> wm = std::exp(std::complex<double>(0, -2.0 * M_PI / m));
+        for (size_t k = 0; k < N; k += m) {
+            std::complex<double> w = 1;
+            for (size_t j = 0; j < m / 2; ++j) {
+                std::complex<double> t = w * spectrum[k + j + m / 2];
+                std::complex<double> u = spectrum[k + j];
+                spectrum[k + j] = u + t;
+                spectrum[k + j + m / 2] = u - t;
+                w *= wm;
+            }
+        }
     }
 
     return spectrum;
 }
 
-Signal Signal::IDFT(const std::vector<std::complex<double>> &spectrum) const
-{
-    const size_t N = spectrum.size();
+Signal Signal::IDFT() const {
+    const size_t N = this->size();
     Signal reconstructedSignal(N, samplingFrequency);
 
-    for (size_t n = 0; n < N; ++n) {
-        std::complex<double> sum(0.0, 0.0);
-        for (size_t k = 0; k < N; ++k) {
-            double theta = 2.0 * M_PI * k * n / N;
-            sum += spectrum[k] * std::exp(std::complex<double>(0.0, theta));
+    // Bit-reversal permutation
+    size_t n = N;
+    size_t bits = 0;
+    while (n >>= 1) ++bits;
+
+    vector<size_t> reversed(N);
+    for (size_t i = 0; i < N; ++i) {
+        size_t j = 0;
+        for (size_t k = 0; k < bits; ++k) {
+            if (i & (1 << k)) j |= (1 << (bits - 1 - k));
         }
-        reconstructedSignal[n] = sum / static_cast<double>(N);
+        reversed[i] = j;
+    }
+
+    // Copy input data to reconstructedSignal with bit-reversed order
+    for (size_t i = 0; i < N; ++i) {
+        reconstructedSignal[reversed[i]] = (*this)[i];
+    }
+
+    // IFFT algorithm
+    for (size_t s = 1; s <= bits; ++s) {
+        size_t m = 1 << s;
+        std::complex<double> wm = std::exp(std::complex<double>(0, 2.0 * M_PI / m)); // Note the sign change
+        for (size_t k = 0; k < N; k += m) {
+            std::complex<double> w = 1;
+            for (size_t j = 0; j < m / 2; ++j) {
+                std::complex<double> t = w * reconstructedSignal[k + j + m / 2];
+                std::complex<double> u = reconstructedSignal[k + j];
+                reconstructedSignal[k + j] = u + t;
+                reconstructedSignal[k + j + m / 2] = u - t;
+                w *= wm;
+            }
+        }
+    }
+
+    // Normalize by dividing by N
+    for (size_t i = 0; i < N; ++i) {
+        reconstructedSignal[i] /= N;
     }
 
     return reconstructedSignal;
+}
+
+void Signal::generateFrequencyAxis() {
+    const size_t N = size();
+    for (size_t k = 0; k < N; ++k) {
+        (*this)[k] = k * samplingFrequency / N;
+    }
 }
 
 /* ------------------------------ */

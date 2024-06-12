@@ -27,7 +27,7 @@ std::vector<Signal> CSVFile::readSignals(double samplingFrequency) {
     return signals;
 }
 
-void CSVFile::writeSignals(const std::vector<Signal> &signals) {
+void CSVFile::writeSignals(const std::vector<Signal> &signals, bool time_or_freq_axis) {
     if (signals.empty()) {
         throw std::invalid_argument("No signals provided");
     }
@@ -38,7 +38,7 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals) {
     }
 
     // Write the header
-    mFileStream << "time";
+    mFileStream << ((time_or_freq_axis)? "freq":"time");
     for (auto &signal : signals) {
         mFileStream << "," << signal.getName(); // Write the signal name
     }
@@ -53,10 +53,13 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals) {
     }
 
     // Write the time and signal values
-    double time;
+    double axis_value;
     for (size_t i = 0; i < maxSize; ++i) {
-        time = i / signals[0].getSamplingFrequency();
-        mFileStream << time;
+        if (!time_or_freq_axis) // time
+            axis_value = i / signals[0].getSamplingFrequency(); 
+        else // frequency
+            axis_value = i * signals[0].getSamplingFrequency() / maxSize;
+        mFileStream << axis_value;
         for (const auto &signal : signals) {
             mFileStream << ",";
             if (i < signal.size()) {
