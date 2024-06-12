@@ -1,3 +1,6 @@
+#ifndef __FILTER_HPP
+#define __FILTER_HPP
+
 #include <vector>
 #include <complex>
 #include <cmath>
@@ -5,8 +8,6 @@
 #include <iostream>
 
 class Signal;
-
-using complexd = std::complex<double>;
 
 enum class FilterGabarit {
     LOW_PASS,
@@ -77,7 +78,7 @@ private:
     AnalogFilter mAnalogFilter;
 
     std::vector<double> _a, _b;
-    std::vector<complexd> _z, _p;
+    std::vector<std::complex<double>> _z, _p;
     double _k; // gain
     std::vector<double> _xMem, _yMem;
 };
@@ -87,16 +88,18 @@ private:
 /* Méthode 2 */
 
 // Return (z,p,k) for analog prototype of Nth-order Butterworth filter
-void ButterworthAnalogPrototype(int N, std::vector<complexd> &z, std::vector<complexd> &p, double &k);
+void ButterworthAnalogPrototype(int N, std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k);
 
-void TransformLowpassToLowpass(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped);
+void TransformLowpassToLowpass(std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k, double warped);
 
-void TransformLowpassToHighpass(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped);
+void TransformLowpassToHighpass(std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k, double warped);
 
-void TransformLowpassToBandpass(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped1, double warped2);
+void TransformLowpassToBandpass(std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k, double warped1, double warped2);
 
-void TransformLowpassToBandStop(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double warped1, double warped2);
+void TransformLowpassToBandStop(std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k, double warped1, double warped2);
 
-void IIRBilinearTransformation(std::vector<complexd> &z, std::vector<complexd> &p, double &k, double fs);
+void IIRBilinearTransformation(std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k, double fs);
 
-void PolynomialTransfer(const std::vector<complexd> &z, const std::vector<complexd> &p, double k, std::vector<double> &a, std::vector<double> &b);
+void PolynomialTransfer(const std::vector<std::complex<double>> &z, const std::vector<std::complex<double>> &p, double k, std::vector<double> &a, std::vector<double> &b);
+
+#endif // __FILTER_HPP

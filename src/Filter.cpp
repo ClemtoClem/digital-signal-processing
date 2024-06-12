@@ -96,7 +96,7 @@ Signal IIRFilter::filtering(const Signal &input) {
     Signal output(input.size(), mFs);
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = _b[0] * input[i];
-        for (size_t j = 1; j < 3*mOrder; j++) {
+        for (size_t j = 1; j < 3*static_cast<size_t>(mOrder); j++) {
             if (i >= j) {
                 output[i] += (_b[j] * input[i - j]) - (_a[j] * output[i - j]);
             }
@@ -203,35 +203,35 @@ void IIRFilter::ButterworthCoefficients()
 /* -------------------------------------------------------------------------- */
 /* Méthode 2 */
 
-void ButterworthAnalogPrototype(int N, std::vector<complexd> &z, std::vector<complexd> &p, double &k) {
+void ButterworthAnalogPrototype(int N, std::vector<std::complex<double>> &z, std::vector<std::complex<double>> &p, double &k) {
     p.clear();
     for (int i = 0; i < N; ++i) {
         double theta = M_PI * (2 * i + 1) / (2 * N);
-        complexd pole = std::polar(1.0, theta);
+        std::complex<double> pole = std::polar(1.0, theta);
         p.push_back(pole);
     }
     k = 1;
 }
 
-void TransformLowpassToLowpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped) {
-    for (complexd &z : zeros) {
+void TransformLowpassToLowpass(std::vector<std::complex<double>> &zeros, std::vector<std::complex<double>> &poles, double &k, double warped) {
+    for (std::complex<double> &z : zeros) {
         z *= warped;
     }
-    for (complexd &p : poles) {
+    for (std::complex<double> &p : poles) {
         p *= warped;
     }
     int degree = poles.size() - zeros.size();
     k *= pow(warped, degree);
 }
 
-void TransformLowpassToHighpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped) {
-    complexd mulZ = 1.0;
-    for (complexd &z : zeros) {
+void TransformLowpassToHighpass(std::vector<std::complex<double>> &zeros, std::vector<std::complex<double>> &poles, double &k, double warped) {
+    std::complex<double> mulZ = 1.0;
+    for (std::complex<double> &z : zeros) {
         mulZ *= -z;
         z = warped / z;
     }
-    complexd mulP = 1.0;
-    for (complexd &p : poles) {
+    std::complex<double> mulP = 1.0;
+    for (std::complex<double> &p : poles) {
         mulP *= -p;
         p = warped / p;
     }
@@ -239,12 +239,12 @@ void TransformLowpassToHighpass(std::vector<complexd> &zeros, std::vector<comple
     k *= std::real(mulZ / mulP);
 }
 
-void TransformLowpassToBandpass(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped1, double warped2) {
+void TransformLowpassToBandpass(std::vector<std::complex<double>> &zeros, std::vector<std::complex<double>> &poles, double &k, double warped1, double warped2) {
     double bw = warped2 - warped1;
     double wo = sqrt(warped1 * warped2);
     int degree = poles.size() - zeros.size();
 
-    std::vector<complexd> z_bp, p_bp;
+    std::vector<std::complex<double>> z_bp, p_bp;
     for (const auto &z : zeros) {
         z_bp.push_back(z * bw / 2.0);
     }
@@ -252,14 +252,14 @@ void TransformLowpassToBandpass(std::vector<complexd> &zeros, std::vector<comple
         p_bp.push_back(p * bw / 2.0);
     }
 
-    std::vector<complexd> z_final, p_final;
+    std::vector<std::complex<double>> z_final, p_final;
     for (const auto &z : z_bp) {
-        complexd sqrt_term = std::sqrt(z * z - wo * wo);
+        std::complex<double> sqrt_term = std::sqrt(z * z - wo * wo);
         z_final.push_back(z + sqrt_term);
         z_final.push_back(z - sqrt_term);
     }
     for (const auto &p : p_bp) {
-        complexd sqrt_term = std::sqrt(p * p - wo * wo);
+        std::complex<double> sqrt_term = std::sqrt(p * p - wo * wo);
         p_final.push_back(p + sqrt_term);
         p_final.push_back(p - sqrt_term);
     }
@@ -274,12 +274,12 @@ void TransformLowpassToBandpass(std::vector<complexd> &zeros, std::vector<comple
 }
 
 
-void TransformLowpassToBandStop(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double warped1, double warped2) {
+void TransformLowpassToBandStop(std::vector<std::complex<double>> &zeros, std::vector<std::complex<double>> &poles, double &k, double warped1, double warped2) {
     double bw = warped2 - warped1;
     double wo = sqrt(warped1 * warped2);
     int degree = poles.size() - zeros.size();
 
-    std::vector<complexd> z_hp, p_hp;
+    std::vector<std::complex<double>> z_hp, p_hp;
     for (const auto &z : zeros) {
         z_hp.push_back((bw / 2.0) / z);
     }
@@ -287,49 +287,49 @@ void TransformLowpassToBandStop(std::vector<complexd> &zeros, std::vector<comple
         p_hp.push_back((bw / 2.0) / p);
     }
 
-    std::vector<complexd> z_final, p_final;
+    std::vector<std::complex<double>> z_final, p_final;
     for (const auto &z : z_hp) {
-        complexd sqrt_term = std::sqrt(z * z - wo * wo);
+        std::complex<double> sqrt_term = std::sqrt(z * z - wo * wo);
         z_final.push_back(z + sqrt_term);
         z_final.push_back(z - sqrt_term);
     }
     for (const auto &p : p_hp) {
-        complexd sqrt_term = std::sqrt(p * p - wo * wo);
+        std::complex<double> sqrt_term = std::sqrt(p * p - wo * wo);
         p_final.push_back(p + sqrt_term);
         p_final.push_back(p - sqrt_term);
     }
 
     for (int i = 0; i < degree; ++i) {
-        z_final.push_back(complexd(0.0, wo));
-        z_final.push_back(complexd(0.0, -wo));
+        z_final.push_back(std::complex<double>(0.0, wo));
+        z_final.push_back(std::complex<double>(0.0, -wo));
     }
 
-    k *= std::real(std::accumulate(poles.begin(), poles.end(), complexd(1.0), 
-                      [=](const complexd &accum, const complexd &pole) { return accum * (-pole); }) /
-                   std::accumulate(zeros.begin(), zeros.end(), complexd(1.0), 
-                      [=](const complexd &accum, const complexd &zero) { return accum * (-zero); }));
+    k *= std::real(std::accumulate(poles.begin(), poles.end(), std::complex<double>(1.0), 
+                      [=](const std::complex<double> &accum, const std::complex<double> &pole) { return accum * (-pole); }) /
+                   std::accumulate(zeros.begin(), zeros.end(), std::complex<double>(1.0), 
+                      [=](const std::complex<double> &accum, const std::complex<double> &zero) { return accum * (-zero); }));
 
     zeros = std::move(z_final);
     poles = std::move(p_final);
 }
 
-void IIRBilinearTransformation(std::vector<complexd> &zeros, std::vector<complexd> &poles, double &k, double fs) {
+void IIRBilinearTransformation(std::vector<std::complex<double>> &zeros, std::vector<std::complex<double>> &poles, double &k, double fs) {
     int degree = poles.size() - zeros.size();
     double fs2 = 2.0 * fs;
 
-    std::vector<complexd> z_transformed, p_transformed;
-    complexd mulZ = 1.0;
+    std::vector<std::complex<double>> z_transformed, p_transformed;
+    std::complex<double> mulZ = 1.0;
     for (const auto &z : zeros) {
-        mulZ *= (complexd(fs2) - z);
+        mulZ *= (std::complex<double>(fs2) - z);
         z_transformed.push_back((fs2 + z) / (fs2 - z));
     }
-    complexd mulP = 1.0;
+    std::complex<double> mulP = 1.0;
     for (const auto &p : poles) {
-        mulP *= (complexd(fs2) - p);
+        mulP *= (std::complex<double>(fs2) - p);
         p_transformed.push_back((fs2 + p) / (fs2 - p));
     }
     for (int i = 0; i < degree; ++i) {
-        z_transformed.push_back(complexd(-1.0, 0.0));
+        z_transformed.push_back(std::complex<double>(-1.0, 0.0));
     }
 
     k *= std::real(mulZ / mulP);
@@ -338,7 +338,7 @@ void IIRBilinearTransformation(std::vector<complexd> &zeros, std::vector<complex
 }
 
 
-void poly(const std::vector<complexd> &roots, std::vector<double> &coeffs) {
+void poly(const std::vector<std::complex<double>> &roots, std::vector<double> &coeffs) {
     coeffs[0] = 1.0;
     for (const auto &root : roots) {
         std::vector<double> new_coeffs(coeffs.size() + 1);
@@ -350,22 +350,22 @@ void poly(const std::vector<complexd> &roots, std::vector<double> &coeffs) {
     }
 }
 
-void PolynomialTransfer(const std::vector<complexd> &zeros, const std::vector<complexd> &poles, double k, std::vector<double> &b, std::vector<double> &a) {
+void PolynomialTransfer(const std::vector<std::complex<double>> &zeros, const std::vector<std::complex<double>> &poles, double k, std::vector<double> &b, std::vector<double> &a) {
     poly(zeros, b);
     for (auto &coeff : b) {
         coeff *= k;
     }
     poly(poles, a);
 
-    auto are_conjugates = [](const std::vector<complexd> &roots) {
-        std::vector<complexd> pos_roots, neg_roots;
+    auto are_conjugates = [](const std::vector<std::complex<double>> &roots) {
+        std::vector<std::complex<double>> pos_roots, neg_roots;
         for (const auto &root : roots) {
             if (root.imag() > 0) pos_roots.push_back(root);
             else if (root.imag() < 0) neg_roots.push_back(std::conj(root));
         }
         if (pos_roots.size() != neg_roots.size()) return false;
-        std::sort(pos_roots.begin(), pos_roots.end(), [](const complexd &a, const complexd &b) { return std::arg(a) < std::arg(b); });
-        std::sort(neg_roots.begin(), neg_roots.end(), [](const complexd &a, const complexd &b) { return std::arg(a) < std::arg(b); });
+        std::sort(pos_roots.begin(), pos_roots.end(), [](const std::complex<double> &a, const std::complex<double> &b) { return std::arg(a) < std::arg(b); });
+        std::sort(neg_roots.begin(), neg_roots.end(), [](const std::complex<double> &a, const std::complex<double> &b) { return std::arg(a) < std::arg(b); });
         return std::equal(pos_roots.begin(), pos_roots.end(), neg_roots.begin());
     };
 

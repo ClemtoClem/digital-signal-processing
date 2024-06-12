@@ -31,7 +31,7 @@ def plot_signals(ax, signals: dict):
 
     for signal_name, signal_data in signals.items():
         print(signal_name)
-        if signal_name != "time":
+        if signal_name.lower() != "time":
             ax.plot(signals["time"], np.real(signal_data), label=signal_name)  # Afficher l'amplitude absolue
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Amplitude')
@@ -90,7 +90,7 @@ def toggle_plot(event):
 filename = 'test.csv'
 
 # Nom du fichier CSV contenant les FFT
-fft_filename = 'test_fft.csv'
+fft_filename = 'test_DFT.csv'
 
 # Lecture des signaux à partir du fichier CSV
 signals = read_csv(filename)

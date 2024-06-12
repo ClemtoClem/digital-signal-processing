@@ -195,7 +195,8 @@ build/Filter.o: src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp \
  /usr/include/c++/11/bits/erase_if.h \
  /usr/include/c++/11/pstl/execution_defs.h /usr/include/c++/11/numeric \
  /usr/include/c++/11/bits/stl_numeric.h /usr/include/c++/11/bit \
- /usr/include/c++/11/pstl/glue_numeric_defs.h src/Signal.hpp
+ /usr/include/c++/11/pstl/glue_numeric_defs.h src/Signal.hpp \
+ /usr/include/c++/11/optional
 src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp :
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h :
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h :
@@ -394,3 +395,4 @@ src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp :
  /usr/include/c++/11/pstl/execution_defs.h /usr/include/c++/11/numeric :
  /usr/include/c++/11/bits/stl_numeric.h /usr/include/c++/11/bit :
  /usr/include/c++/11/pstl/glue_numeric_defs.h src/Signal.hpp :
+ /usr/include/c++/11/optional :
