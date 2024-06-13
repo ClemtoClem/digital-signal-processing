@@ -52,7 +52,7 @@ std::vector<double> Signal::getRealBuffer() const {
 
 Signal Signal::operator+(const Signal& other) const {
     Signal result(std::max(this->size(), other.size()), this->samplingFrequency);
-    for (size_t i = 0; i < result.size(); ++i) {
+    for (size_t i = 0; i < result.size(); i++) {
         std::complex<double> val1 = (i < this->size() ? (*this)[i] : 0);
         std::complex<double> val2 = (i < other.size() ? other[i] : 0);
         result[i] = val1 + val2;
@@ -62,7 +62,7 @@ Signal Signal::operator+(const Signal& other) const {
 
 Signal Signal::operator-(const Signal& other) const {
     Signal result(std::max(this->size(), other.size()), this->samplingFrequency);
-    for (size_t i = 0; i < result.size(); ++i) {
+    for (size_t i = 0; i < result.size(); i++) {
         std::complex<double> val1 = (i < this->size() ? (*this)[i] : 0);
         std::complex<double> val2 = (i < other.size() ? other[i] : 0);
         result[i] = val1 - val2;
@@ -72,7 +72,7 @@ Signal Signal::operator-(const Signal& other) const {
 
 Signal Signal::operator*(const Signal& other) const {
     Signal result(std::max(this->size(), other.size()), this->samplingFrequency);
-    for (size_t i = 0; i < result.size(); ++i) {
+    for (size_t i = 0; i < result.size(); i++) {
         std::complex<double> val1 = (i < this->size() ? (*this)[i] : 1);
         std::complex<double> val2 = (i < other.size() ? other[i] : 1);
         result[i] = val1 * val2;
@@ -82,7 +82,7 @@ Signal Signal::operator*(const Signal& other) const {
 
 Signal Signal::operator/(const Signal& other) const {
     Signal result(std::max(this->size(), other.size()), this->samplingFrequency);
-    for (size_t i = 0; i < result.size(); ++i) {
+    for (size_t i = 0; i < result.size(); i++) {
         std::complex<double> val1 = (i < this->size() ? (*this)[i] : 1);
         std::complex<double> val2 = (i < other.size() && other[i] != std::complex<double>(0, 0) ? other[i] : 1);
         result[i] = val1 / val2;
@@ -91,7 +91,7 @@ Signal Signal::operator/(const Signal& other) const {
 }
 
 Signal &Signal::operator+=(const Signal &other){
-    for (size_t i = 0; i < std::max(this->size(), other.size()); ++i) {
+    for (size_t i = 0; i < std::max(this->size(), other.size()); i++) {
         if (i >= this->size()) {
             this->push_back(other[i]);
         } else {
@@ -102,7 +102,7 @@ Signal &Signal::operator+=(const Signal &other){
 }
 
 Signal& Signal::operator-=(const Signal& other) {
-    for (size_t i = 0; i < std::max(this->size(), other.size()); ++i) {
+    for (size_t i = 0; i < std::max(this->size(), other.size()); i++) {
         if (i >= this->size()) {
             this->push_back(-other[i]);
         } else {
@@ -113,7 +113,7 @@ Signal& Signal::operator-=(const Signal& other) {
 }
 
 Signal& Signal::operator*=(const Signal& other) {
-    for (size_t i = 0; i < std::max(this->size(), other.size()); ++i) {
+    for (size_t i = 0; i < std::max(this->size(), other.size()); i++) {
         if (i >= this->size()) {
             this->push_back(0);
         } else {
@@ -124,7 +124,7 @@ Signal& Signal::operator*=(const Signal& other) {
 }
 
 Signal& Signal::operator/=(const Signal& other) {
-    for (size_t i = 0; i < std::max(this->size(), other.size()); ++i) {
+    for (size_t i = 0; i < std::max(this->size(), other.size()); i++) {
         if (i >= this->size()) {
             this->push_back(0);
         } else {
@@ -138,7 +138,7 @@ Signal& Signal::operator/=(const Signal& other) {
 
 Signal Signal::operator+(const std::complex<double>& value) const {
     Signal result(this->size(), this->samplingFrequency);
-    for (size_t i = 0; i < this->size(); ++i) {
+    for (size_t i = 0; i < this->size(); i++) {
         result[i] = (*this)[i] + value;
     }
     return result;
@@ -146,7 +146,7 @@ Signal Signal::operator+(const std::complex<double>& value) const {
 
 Signal Signal::operator-(const std::complex<double>& value) const {
     Signal result(this->size(), this->samplingFrequency);
-    for (size_t i = 0; i < this->size(); ++i) {
+    for (size_t i = 0; i < this->size(); i++) {
         result[i] = (*this)[i] - value;
     }
     return result;
@@ -154,7 +154,7 @@ Signal Signal::operator-(const std::complex<double>& value) const {
 
 Signal Signal::operator*(const std::complex<double>& value) const {
     Signal result(this->size(), this->samplingFrequency);
-    for (size_t i = 0; i < this->size(); ++i) {
+    for (size_t i = 0; i < this->size(); i++) {
         result[i] = (*this)[i] * value;
     }
     return result;
@@ -162,7 +162,7 @@ Signal Signal::operator*(const std::complex<double>& value) const {
 
 Signal Signal::operator/(const std::complex<double>& value) const {
     Signal result(this->size(), this->samplingFrequency);
-    for (size_t i = 0; i < this->size(); ++i) {
+    for (size_t i = 0; i < this->size(); i++) {
         result[i] = (*this)[i] / value;
     }
     return result;
@@ -364,18 +364,18 @@ std::complex<double> Signal::mean() const {
 
 /* ------------------------------- */
 
-Signal Signal::DFT() const
-{
-    const size_t N = size();
-    Signal spectrum(N, samplingFrequency);
+Signal Signal::DFT(size_t size_zero_padding) const {
+    size_t N = size();
+    size_t P = N + size_zero_padding;
+    Signal spectrum(P, samplingFrequency);
 
     // Bit-reversal permutation
-    size_t n = N;
+    size_t n = P;
     size_t bits = 0;
     while (n >>= 1) ++bits;
 
-    vector<size_t> reversed(N);
-    for (size_t i = 0; i < N; ++i) {
+    vector<size_t> reversed(P);
+    for (size_t i = 0; i < P; i++) {
         size_t j = 0;
         for (size_t k = 0; k < bits; ++k) {
             if (i & (1 << k)) j |= (1 << (bits - 1 - k));
@@ -383,16 +383,20 @@ Signal Signal::DFT() const
         reversed[i] = j;
     }
 
-    // Copy input data to spectrum with bit-reversed order
-    for (size_t i = 0; i < N; ++i) {
+    // Copy input data to spectrum with bit-reversed order and zero-padding
+    size_t i;
+    for (i = 0; i < N; i++) {
         spectrum[reversed[i]] = (*this)[i];
+    }
+    for (i = N; i < P; i++) {
+        spectrum[reversed[i]] = 0.0; // Zero-padding
     }
 
     // FFT algorithm
     for (size_t s = 1; s <= bits; ++s) {
         size_t m = 1 << s;
         std::complex<double> wm = std::exp(std::complex<double>(0, -2.0 * M_PI / m));
-        for (size_t k = 0; k < N; k += m) {
+        for (size_t k = 0; k < P; k += m) {
             std::complex<double> w = 1;
             for (size_t j = 0; j < m / 2; ++j) {
                 std::complex<double> t = w * spectrum[k + j + m / 2];
@@ -407,17 +411,18 @@ Signal Signal::DFT() const
     return spectrum;
 }
 
-Signal Signal::IDFT() const {
-    const size_t N = this->size();
-    Signal reconstructedSignal(N, samplingFrequency);
+Signal Signal::IDFT(size_t size_zero_padding) const {
+    size_t N = this->size();
+    size_t P = N + size_zero_padding;
+    Signal reconstructedSignal(P, samplingFrequency);
 
     // Bit-reversal permutation
-    size_t n = N;
+    size_t n = P;
     size_t bits = 0;
-    while (n >>= 1) ++bits;
+    while (n >>= 1) bits++;
 
-    vector<size_t> reversed(N);
-    for (size_t i = 0; i < N; ++i) {
+    vector<size_t> reversed(P);
+    for (size_t i = 0; i < P; i++) {
         size_t j = 0;
         for (size_t k = 0; k < bits; ++k) {
             if (i & (1 << k)) j |= (1 << (bits - 1 - k));
@@ -426,17 +431,21 @@ Signal Signal::IDFT() const {
     }
 
     // Copy input data to reconstructedSignal with bit-reversed order
-    for (size_t i = 0; i < N; ++i) {
+    size_t i;
+    for (i = 0; i < N; i++) {
         reconstructedSignal[reversed[i]] = (*this)[i];
+    }
+    for (i = N; i < P; i++) {
+        reconstructedSignal[reversed[i]] = 0.0;
     }
 
     // IFFT algorithm
-    for (size_t s = 1; s <= bits; ++s) {
+    for (size_t s = 1; s <= bits; s++) {
         size_t m = 1 << s;
-        std::complex<double> wm = std::exp(std::complex<double>(0, 2.0 * M_PI / m)); // Note the sign change
-        for (size_t k = 0; k < N; k += m) {
+        std::complex<double> wm = std::exp(std::complex<double>(0.0, 2.0 * M_PI / m)); // Note the sign change
+        for (size_t k = 0; k < P; k += m) {
             std::complex<double> w = 1;
-            for (size_t j = 0; j < m / 2; ++j) {
+            for (size_t j = 0; j < m / 2; j++) {
                 std::complex<double> t = w * reconstructedSignal[k + j + m / 2];
                 std::complex<double> u = reconstructedSignal[k + j];
                 reconstructedSignal[k + j] = u + t;
@@ -447,7 +456,7 @@ Signal Signal::IDFT() const {
     }
 
     // Normalize by dividing by N
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < P; i++) {
         reconstructedSignal[i] /= N;
     }
 

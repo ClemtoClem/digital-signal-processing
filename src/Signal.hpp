@@ -277,10 +277,10 @@ public:
     /* ------------------------------- */
 
     // Fonction pour effectuer la transformée de Fourier discrète  rapide(DFT) et générer le spectre
-    Signal DFT() const;
+    Signal DFT(size_t size_zero_padding = 0) const;
 
     // Fonction pour effectuer la transformée de Fourier inverse rapide (IDFT) et reconstruire le signal
-    Signal IDFT() const;
+    Signal IDFT(size_t size_zero_padding = 0) const;
 
     // Générer un axe fréquentiel en fonction de la fréquence d'échantillonnage
     void generateFrequencyAxis();
