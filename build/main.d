@@ -207,8 +207,10 @@ build/main.o: src/main.cpp /usr/include/stdc-predef.h \
  /usr/include/libintl.h /usr/include/c++/11/bits/locale_facets_nonio.tcc \
  /usr/include/c++/11/bits/locale_conv.h \
  /usr/include/c++/11/bits/unique_ptr.h \
- /usr/include/c++/11/bits/quoted_string.h src/Filter.hpp \
- src/Demodulator.hpp
+ /usr/include/c++/11/bits/quoted_string.h src/Filter.hpp src/Noise.hpp \
+ /usr/include/c++/11/random /usr/include/c++/11/bits/random.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
+ /usr/include/c++/11/bits/random.tcc src/Demodulator.hpp
 src/main.cpp /usr/include/stdc-predef.h :
  /usr/include/c++/11/iostream :
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h :
@@ -418,5 +420,7 @@ src/main.cpp /usr/include/stdc-predef.h :
  /usr/include/libintl.h /usr/include/c++/11/bits/locale_facets_nonio.tcc :
  /usr/include/c++/11/bits/locale_conv.h :
  /usr/include/c++/11/bits/unique_ptr.h :
- /usr/include/c++/11/bits/quoted_string.h src/Filter.hpp :
- src/Demodulator.hpp :
+ /usr/include/c++/11/bits/quoted_string.h src/Filter.hpp src/Noise.hpp :
+ /usr/include/c++/11/random /usr/include/c++/11/bits/random.h :
+ /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h :
+ /usr/include/c++/11/bits/random.tcc src/Demodulator.hpp :

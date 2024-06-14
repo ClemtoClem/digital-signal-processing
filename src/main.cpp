@@ -2,6 +2,7 @@
 #include "Signal.hpp"
 #include "CSVFile.hpp"
 #include "Filter.hpp"
+#include "Noise.hpp"
 #include "Demodulator.hpp"
 
 const int MAX_SAMPLING_FREQ = 250e6;
@@ -151,6 +152,13 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
+    /* Bruiter le signal */
+
+    Noise noise;
+    noise.setParams(NoiseType::WHITE, SAMPLING_FREQ, 0.05);
+    signal_output = noise.process(signal_output);
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* Test du filtre IIR passe bas de butterworth */
 
     std::cout << "Filtrage" << std::endl;
@@ -162,7 +170,7 @@ int test_demodulate(int argc, char *argv[]) try {
     iir_filter.setup();
     std::cout << "Filtre passe bas :\n";
     iir_filter.printCoefficients();
-    signalLP = iir_filter.filtering(signal_output);
+    signalLP = iir_filter.process(signal_output);
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 

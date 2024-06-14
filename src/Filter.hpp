@@ -30,7 +30,7 @@ public:
     virtual bool set(int order, int fc1, int fc2, int fs, FilterGabarit gabarit, AnalogFilter analogFilter, int rp = 0, int rs = 0) = 0;
     virtual void setup() = 0;
     virtual void reset() = 0;
-    virtual Signal filtering(const Signal &input) = 0;
+    virtual Signal process(const Signal &input) = 0;
     virtual double eqdiff(double x) = 0;
     virtual void printCoefficients() = 0;
 };
@@ -54,7 +54,7 @@ public:
     // calcul des coefficients
     void setup();
     
-    Signal filtering(const Signal &input);
+    Signal process(const Signal &input);
 
     /* ----- Méthode 2 ----- */
 

@@ -88,7 +88,7 @@ void IIRFilter::setup() {
     }
 }
 
-Signal IIRFilter::filtering(const Signal &input) {
+Signal IIRFilter::process(const Signal &input) {
     if (mIsSetup == false) {
         throw std::invalid_argument("Filter is not set up");
     }

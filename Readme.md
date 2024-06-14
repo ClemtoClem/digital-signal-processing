@@ -25,6 +25,7 @@ The Python version used is 3.10.12.
 #include <cmath>
 #include "CSVFile.hpp"
 #include "Filter.hpp"
+#include "Noise.hpp"
 
 const int SAMPLING_FREQ = 250e6;
 const uint32_t SIGNAL_SIZE = 16384;
@@ -58,13 +59,19 @@ int main() {
 
     out = (s1 + s2) * 0.8;
 
+
+    Noise noise;
+    noise.setParams(NoiseType::WHITE, SAMPLING_FREQ, 0.05);
+    out = noise.process(out);
+
+
     IIRFilter iir_filter;
 
     /* Low pass filter */
     iir_filter.set(4, 20e3, 0, SAMPLING_FREQ, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
     iir_filter.setup();
     iir_filter.printCoefficients();
-    out_filtered = iir_filter.filtering(out);
+    out_filtered = iir_filter.process(out);
 
     CSVFile outFile("./data/test.csv");
     std::vector<Signal> outSignals;

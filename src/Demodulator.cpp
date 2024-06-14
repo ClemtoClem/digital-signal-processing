@@ -19,10 +19,10 @@ void Demodulator::demodulate(Signal &signal, Signal &outputAmplitude, Signal &ou
     cosinus.generateWaveform(WaveformType::COSINUS, 1.0, mFreqOscillator);
 
     Signal tempA = signal * sinus;
-    tempA = mFilter.filtering(tempA);
+    tempA = mFilter.process(tempA);
 
     Signal tempPhi = signal * cosinus;
-    tempPhi = mFilter.filtering(tempPhi);
+    tempPhi = mFilter.process(tempPhi);
 
     outputAmplitude.resize(signal.size());
     outputPhase.resize(signal.size());
