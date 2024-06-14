@@ -91,7 +91,7 @@ def plot_signal_with_rise_time(ax: plt.Axes, signals: dict, signal_name: str):
     ax.axvline(time[high_index], color='g', linestyle='--', label='90% threshold')
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Amplitude')
-    ax.set_title(f'Signal with Rise Time: {rise_time:.4f} s')
+    ax.set_title(f'Signal with Rise Time: {rise_time} s')
     ax.legend()
     ax.grid(True)
 
