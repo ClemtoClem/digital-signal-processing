@@ -75,10 +75,10 @@ int main() {
     outFile.writeSignals(outSignals, false); // with time axis
 
 
-    Signal DFT_s1(SIGNAL_SIZE, SAMPLING_FREQ, "s1(t)");
-    Signal DFT_s2(SIGNAL_SIZE, SAMPLING_FREQ, "s2(t)");
-    Signal DFT_out(SIGNAL_SIZE, SAMPLING_FREQ, "output(t)");
-    Signal DFT_out_filtered(SIGNAL_SIZE, SAMPLING_FREQ, "output_filtered(t)");
+    Signal DFT_s1(SIGNAL_SIZE, SAMPLING_FREQ, "S1(f)");
+    Signal DFT_s2(SIGNAL_SIZE, SAMPLING_FREQ, "S2(f)");
+    Signal DFT_out(SIGNAL_SIZE, SAMPLING_FREQ, "OUTPUT(f)");
+    Signal DFT_out_filtered(SIGNAL_SIZE, SAMPLING_FREQ, "OUTPUT_FILTERED(f)");
 
     DFT_s1 = s1.DFT(SIGNAL_SIZE); // with zero padding
     DFT_s2 = s2.DFT(); // unless zero padding
