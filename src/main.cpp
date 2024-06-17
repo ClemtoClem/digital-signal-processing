@@ -155,7 +155,7 @@ int test_demodulate(int argc, char *argv[]) try {
     /* Bruiter le signal */
 
     Noise noise;
-    noise.setParams(NoiseType::WHITE, SAMPLING_FREQ, 0.05);
+    noise.set(NoiseType::WHITE, SAMPLING_FREQ, 0.05);
     signal_output = noise.process(signal_output);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
@@ -171,6 +171,7 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cout << "Filtre passe bas :\n";
     iir_filter.printCoefficients();
     signalLP = iir_filter.process(signal_output);
+    //iir_filter.frequency_response(SIGNAL_SIZE)
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 
@@ -213,7 +214,7 @@ int test_demodulate(int argc, char *argv[]) try {
     outSignals.emplace_back(signalLP);
     outSignals.emplace_back(signal_demAmpli);
     outSignals.emplace_back(signal_demPhase);
-    outFile.writeSignals(outSignals, false); // with time axis
+    outFile.writeSignals(outSignals, Axis::Time); // with time axis
 
     std::cout << data_filename << "_DFT.csv" << std::endl;
     CSVFile outFileDFT(data_filename+"_DFT.csv");
@@ -221,7 +222,7 @@ int test_demodulate(int argc, char *argv[]) try {
     outSignalsDFT.emplace_back(DFT_signal_output);
     outSignalsDFT.emplace_back(DFT_signal_demAmpli);
     outSignalsDFT.emplace_back(DFT_signal_demPhase);
-    outFileDFT.writeSignals(outSignalsDFT, true); // with frequency axis
+    outFileDFT.writeSignals(outSignalsDFT, Axis::Freq); // with frequency axis
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
     std::cout << "Test success finish" << std::endl;

@@ -107,6 +107,31 @@ Signal IIRFilter::process(const Signal &input) {
     return output;
 }
 
+Signal IIRFilter::frequency_response(size_t num_points) {
+    if (!mIsSetup) {
+        throw std::invalid_argument("Filter is not set up");
+    }
+
+    Signal response(num_points, mFs);
+    for (size_t i = 0; i < num_points; ++i) {
+        double omega = 2.0 * M_PI * static_cast<double>(i) / num_points;
+        std::complex<double> numerator(0.0, 0.0);
+        std::complex<double> denominator(0.0, 0.0);
+
+        for (size_t j = 0; j < _b.size(); ++j) {
+            numerator += _b[j] * std::exp(std::complex<double>(0.0, -omega * j));
+        }
+
+        for (size_t j = 0; j < _a.size(); ++j) {
+            denominator += _a[j] * std::exp(std::complex<double>(0.0, -omega * j));
+        }
+
+        response[i] = numerator / denominator;
+    }
+
+    return response;
+}
+
 void IIRFilter::ButterworthCoefficients()
 {
     double wc1 = 2 * M_PI * mFc1 / mFs;

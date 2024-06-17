@@ -1,6 +1,6 @@
 #include "Noise.hpp"
 
-void Noise::setParams(NoiseType type, double samplingFreq, double amplitude) {
+void Noise::set(NoiseType type, double samplingFreq, double amplitude) {
     currentType = type;
     fs = samplingFreq;
     amp = amplitude;

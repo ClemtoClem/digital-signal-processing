@@ -27,7 +27,7 @@ std::vector<Signal> CSVFile::readSignals(double samplingFrequency) {
     return signals;
 }
 
-void CSVFile::writeSignals(const std::vector<Signal> &signals, bool time_or_freq_axis) {
+void CSVFile::writeSignals(const std::vector<Signal> &signals, Axis axis) {
     if (signals.empty()) {
         throw std::invalid_argument("No signals provided");
     }
@@ -38,9 +38,13 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals, bool time_or_freq
     }
 
     // Write the header
-    mFileStream << ((time_or_freq_axis)? "freq":"time");
-    for (auto &signal : signals) {
-        mFileStream << "," << signal.getName(); // Write the signal name
+    if (axis == Axis::Freq)
+        mFileStream << "freq,";
+    else if (axis == Axis::Time)
+        mFileStream << "time,";
+    
+    for (size_t s = 0; s < signals.size(); s++) {
+        mFileStream << signals[s].getName() << ((s<signals.size()-1)?",":""); // Write the signal name
     }
     mFileStream << "\n";
 
@@ -55,15 +59,17 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals, bool time_or_freq
     // Write the time and signal values
     double axis_value;
     for (size_t i = 0; i < maxSize; ++i) {
-        if (!time_or_freq_axis) // time
+        if (axis == Axis::Time) { // time
             axis_value = i / signals[0].getSamplingFrequency(); 
-        else // frequency
+            mFileStream << axis_value;
+        } else if (axis == Axis::Freq) { // frequency
             axis_value = i * signals[0].getSamplingFrequency() / maxSize;
-        mFileStream << axis_value;
-        for (const auto &signal : signals) {
-            mFileStream << ",";
-            if (i < signal.size()) {
-                const std::complex<double> &c = signal[i];
+            mFileStream << axis_value;
+        }
+        
+        for (size_t s = 0; s < signals.size(); s++) {
+            if (i < signals[s].size()) {
+                const std::complex<double> &c = signals[s][i];
                 mFileStream << c.real();
                 if (c.imag()!= 0) {
                     mFileStream << (c.imag() >= 0 ? "+" : "") << c.imag() << "j";
@@ -71,6 +77,7 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals, bool time_or_freq
             } else {
                 mFileStream << "0"; // Use 0 for missing values
             }
+            if (s < signals.size()-1) mFileStream << ",";
         }
         mFileStream << "\n";
     }

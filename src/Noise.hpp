@@ -15,7 +15,7 @@ enum class NoiseType {
 
 class Noise {
 public:
-    void setParams(NoiseType type, double samplingFreq, double amplitude);
+    void set(NoiseType type, double samplingFreq, double amplitude);
     Signal process(const Signal &input);
 
 private:

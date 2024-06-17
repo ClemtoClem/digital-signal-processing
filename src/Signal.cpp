@@ -408,6 +408,10 @@ Signal Signal::DFT(size_t size_zero_padding) const {
         }
     }
 
+    for (i = 0; i < P; i++) {
+        spectrum[i] = (spectrum[i]*2.0)/static_cast<double>(N);
+    }
+
     return spectrum;
 }
 

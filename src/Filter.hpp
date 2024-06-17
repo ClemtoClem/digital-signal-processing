@@ -56,6 +56,8 @@ public:
     
     Signal process(const Signal &input);
 
+    Signal frequency_response(size_t num_points);
+
     /* ----- Méthode 2 ----- */
 
     // calcul des coefficients
