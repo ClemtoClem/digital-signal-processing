@@ -6,8 +6,8 @@
 #include <cmath>
 #include <stdexcept>
 #include <iostream>
-
-class Signal;
+#include "Signal.hpp"
+#include "Spectrum.hpp"
 
 enum class FilterGabarit {
     LOW_PASS,
@@ -56,7 +56,7 @@ public:
     
     Signal process(const Signal &input);
 
-    Signal frequency_response(size_t num_points);
+    Spectrum frequency_response(size_t num_points);
 
     /* ----- Méthode 2 ----- */
 

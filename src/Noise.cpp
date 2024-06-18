@@ -1,93 +1,85 @@
 #include "Noise.hpp"
+#include "Signal.hpp"
 
-void Noise::set(NoiseType type, double samplingFreq, double amplitude) {
-    currentType = type;
-    fs = samplingFreq;
-    amp = amplitude;
 
-    // Initialize random number generators
-    generator = std::default_random_engine(std::random_device{}());
-    uniformDistribution = std::uniform_real_distribution<double>(-1.0, 1.0);
-    normalDistribution = std::normal_distribution<double>(0.0, 1.0);
+WhiteNoise::WhiteNoise() : uniformDistribution(-1.0, 1.0) {}
 
-    // Initialize filter coefficients and state if needed
-    if (type == NoiseType::PINK) {
-        pinkFilterCoefficients = {0.02109238, -0.02613793, 0.03399677, -0.04781565, 0.07111543, -0.11625247, 0.22685173, -0.62218065};
-    } else if (type == NoiseType::BROWN) {
-        brownFilterState = {0.0};
-    }
+void WhiteNoise::compute() {
+    // Pas de coefficients spécifiques à calculer pour le bruit blanc
 }
 
-Signal Noise::process(const Signal &input) {
-    Signal result(input.size(), input.getSamplingFrequency());
-
-    // Generate noise samples based on the selected noise type
-    std::vector<double> noiseSamples;
-    switch (currentType) {
-        case NoiseType::WHITE:
-            noiseSamples = whiteNoise(input);
-            break;
-        case NoiseType::PINK:
-            noiseSamples = pinkNoise(input);
-            break;
-        case NoiseType::BROWN:
-            noiseSamples = brownNoise(input);
-            break;
+Signal WhiteNoise::process(const Signal &input) {
+    Signal output = input;
+    for (auto &sample : output) {
+        sample += gain * uniformDistribution(generator);
     }
+    return output;
+}
 
-    // Apply the noise to the input signal
+double WhiteNoise::process(double input) {
+    return input + gain * uniformDistribution(generator);
+}
+
+
+
+
+PinkNoise::PinkNoise() : gain(1.0), b(7, 0.0), a(7, 0.0), x_hist(7, 0.0), y_hist(7, 0.0) {}
+
+void PinkNoise::compute() {
+    // Coefficients based on Voss-McCartney algorithm for pink noise
+    // You can adjust these coefficients as needed
+    b = {0.99886, 0.99332, 0.96900, 0.86650, 0.55000, -0.7616, 0.115926};
+    a = {1.0, -1.6915, 0.8928, -0.3092, 0.1990, -0.1606, 0.1065};
+}
+
+Signal PinkNoise::process(const Signal &input) {
+    Signal output = input;
     for (size_t i = 0; i < input.size(); ++i) {
-        result[i] = input[i] + amp * noiseSamples[i];
+        output[i] = process(input[i]);
     }
-
-    return result;
+    return output;
 }
 
-std::vector<double> Noise::whiteNoise(const Signal &input) {
-    size_t numSamples = input.size();
-    std::vector<double> noise(numSamples);
+double PinkNoise::process(double input) {
+    x_hist.insert(x_hist.begin(), input); // Add current input to history
+    x_hist.pop_back(); // Remove oldest input
 
-    for (size_t i = 0; i < numSamples; ++i) {
-        noise[i] = uniformDistribution(generator);
+    double yn = 0.0;
+    for (size_t i = 0; i < b.size(); ++i) {
+        yn += b[i] * x_hist[i];
     }
+    for (size_t i = 1; i < a.size(); ++i) {
+        yn -= a[i] * y_hist[i - 1];
+    }
+    yn /= a[0];
 
-    return noise;
+    y_hist.insert(y_hist.begin(), yn); // Add current output to history
+    y_hist.pop_back(); // Remove oldest output
+
+    return yn * gain;
 }
 
-std::vector<double> Noise::pinkNoise(const Signal &input) {
-    size_t numSamples = input.size();
-    std::vector<double> noise(numSamples);
 
-    double pinkedSample = 0.0;
-    for (size_t i = 0; i < numSamples; ++i) {
-        pinkedSample += normalDistribution(generator);
 
-        // Apply the pink noise filter coefficients
-        for (size_t j = 0; j < pinkFilterCoefficients.size(); ++j) {
-            if (i >= j) {
-                pinkedSample -= pinkFilterCoefficients[j] * noise[i - j];
-            }
-        }
 
-        noise[i] = pinkedSample;
-    }
+BrownNoise::BrownNoise() : previous(0.0), distribution(-1.0, 1.0) {}
 
-    return noise;
+void BrownNoise::compute() {
+    // Pas de coefficients spécifiques à calculer pour le bruit marron
 }
 
-std::vector<double> Noise::brownNoise(const Signal &input) {
-    size_t numSamples = input.size();
-    std::vector<double> noise(numSamples);
-
-    double brownerSample = brownFilterState[0];
-    for (size_t i = 0; i < numSamples; ++i) {
-        brownerSample += normalDistribution(generator);
-
-        // Update the brown noise filter state
-        brownFilterState[0] = brownerSample;
-
-        noise[i] = brownerSample;
+Signal BrownNoise::process(const Signal &input) {
+    Signal output = input;
+    for (auto &sample : output) {
+        double white = distribution(generator);
+        previous = (previous + (gain * white)) / 1.02;
+        sample += previous * 0.1; // Ajuster le facteur si nécessaire
     }
+    return output;
+}
 
-    return noise;
+double BrownNoise::process(double input) {
+    double white = distribution(generator);
+    previous = (previous + (gain * white)) / 1.02;
+    return input + previous * 0.1; // Ajuster le facteur si nécessaire
 }

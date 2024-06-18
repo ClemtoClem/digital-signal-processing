@@ -1,12 +1,12 @@
 #include <iostream>
+#include "globals.hpp"
 #include "Signal.hpp"
+#include "Spectrum.hpp"
 #include "CSVFile.hpp"
 #include "Filter.hpp"
 #include "Noise.hpp"
 #include "Demodulator.hpp"
 
-const int MAX_SAMPLING_FREQ = 250e6;
-const uint32_t MAX_SIGNAL_SIZE = 16384;
 
 int parseExponentNumber(const std::string &expStr) {
     double number;
@@ -32,9 +32,7 @@ int test_demodulate(int argc, char *argv[]) try {
     double s1_amplitude = 0.8;
     double s2_amplitude = 0.2;
     double phase        = 0;
-    int    decimation   = 32;
     double dem_filter_freq = 3e3;
-    uint32_t signal_size = MAX_SIGNAL_SIZE;
     
     if (argc > 1) {
         // Parcourir chaque argument à partir du deuxième (le premier étant le nom du programme)
@@ -81,13 +79,11 @@ int test_demodulate(int argc, char *argv[]) try {
                     } else if (name == "phase" || name == "ph") {
                         phase = std::stod(value);
                     } else if (name == "decimation" || name == "dec") {
-                        decimation = std::stoi(value);
+                        SetDecimation(std::stoi(value));
                     } else if (name == "dem_filter_freq" || name == "demff") {
                         dem_filter_freq = std::stod(value);
                     } else if (name == "buffsize" || name == "bs") {
-                        signal_size = std::stoul(value);
-                        if (signal_size > MAX_SIGNAL_SIZE)
-                            signal_size = MAX_SIGNAL_SIZE;
+                        SetBufferSize(std::stoull(value));
                     } else if (name == "filename" || name == "f") {
                         data_filename = value;
                     }
@@ -101,14 +97,11 @@ int test_demodulate(int argc, char *argv[]) try {
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
 
-    const uint32_t SIGNAL_SIZE = signal_size;
-    const int SAMPLING_FREQ = (double) MAX_SAMPLING_FREQ / decimation;
-
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
     std::cerr << "-------- Sampling -------" << std::endl;
-    std::cerr << "Decimation  : " << decimation << std::endl;
-    std::cerr << "Sample freq : " << SAMPLING_FREQ << std::endl;
-    std::cerr << "Size buffer : " << SIGNAL_SIZE << std::endl;
+    std::cerr << "Decimation  : " << DECIMATION << std::endl;
+    std::cerr << "Sample freq : " << SAMPLING_FREQUENCY << std::endl;
+    std::cerr << "Size buffer : " << BUFFER_SIZE << std::endl;
     std::cerr << "---- Generate signal ----" << std::endl;
     std::cerr << "Amplitude 1 : " << s1_amplitude << std::endl;
     std::cerr << "Frequency 1 : " << s1_frequency << std::endl;
@@ -124,19 +117,19 @@ int test_demodulate(int argc, char *argv[]) try {
 
     // signal generation and processing code here
 
-    Signal s1(SIGNAL_SIZE, SAMPLING_FREQ);
-    Signal s2(SIGNAL_SIZE, SAMPLING_FREQ);
+    Signal s1;
+    Signal s2;
 
-    Signal signal_output        (SIGNAL_SIZE, SAMPLING_FREQ, "output(t)");
-    //Signal signal_input       (SIGNAL_SIZE, SAMPLING_FREQ, "input(t)");
-    Signal signal_demAmpli      (SIGNAL_SIZE, SAMPLING_FREQ, "amplitude(t)");
-    Signal signal_demPhase      (SIGNAL_SIZE, SAMPLING_FREQ, "phase(t)");
-    Signal signalLP             (SIGNAL_SIZE, SAMPLING_FREQ, "signalFiltré(t)");
+    Signal signal_output        ("output(t)");
+    //Signal signal_input       ("input(t)");
+    Signal signal_demAmpli      ("amplitude(t)");
+    Signal signal_demPhase      ("phase(t)");
+    Signal signalLP             ("signalFiltré(t)");
 
-    Signal DFT_signal_output    (SIGNAL_SIZE, SAMPLING_FREQ, "DFT_output(t)");
-    //Signal DFT_signal_input   (SIGNAL_SIZE, SAMPLING_FREQ, "DFT_input(t)");
-    Signal DFT_signal_demAmpli  (SIGNAL_SIZE, SAMPLING_FREQ, "DFT_amplitude(t)");
-    Signal DFT_signal_demPhase  (SIGNAL_SIZE, SAMPLING_FREQ, "DFT_phase(t)");
+    Spectrum spectrum_output    ("OUTPUT(f)");
+    //Spectrum spectrum_input   ("INPUT(f)");
+    Spectrum spectrum_demAmpli  ("AMPLITUDE(f)");
+    Spectrum spectrum_demPhase  ("PHASE(f)");
 
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
@@ -154,8 +147,8 @@ int test_demodulate(int argc, char *argv[]) try {
     /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* Bruiter le signal */
 
-    Noise noise;
-    noise.set(NoiseType::WHITE, SAMPLING_FREQ, 0.05);
+    WhiteNoise noise;
+    noise.setGain(0.05);
     signal_output = noise.process(signal_output);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
@@ -166,7 +159,7 @@ int test_demodulate(int argc, char *argv[]) try {
     IIRFilter iir_filter;
 
     /* Filtre pass bas */
-    iir_filter.set(4, 20e3, 0, SAMPLING_FREQ, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
+    iir_filter.set(4, 20e3, 0, SAMPLING_FREQUENCY, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
     iir_filter.setup();
     std::cout << "Filtre passe bas :\n";
     iir_filter.printCoefficients();
@@ -181,7 +174,7 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cout << "Demodulation :\n";
 
     double oscillator_frequency = s1_frequency;
-    Demodulator dem(dem_filter_freq, oscillator_frequency, SAMPLING_FREQ);
+    Demodulator dem(dem_filter_freq, oscillator_frequency, SAMPLING_FREQUENCY);
     dem.setup();
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
@@ -196,9 +189,9 @@ int test_demodulate(int argc, char *argv[]) try {
 
     std::cerr << "Calcul des transformées de fourier discrètes" << std::endl;
 
-    DFT_signal_output   = signal_output.DFT(SIGNAL_SIZE);
-    DFT_signal_demAmpli = signal_demAmpli.DFT(SIGNAL_SIZE);
-    DFT_signal_demPhase = signal_demPhase.DFT(SIGNAL_SIZE);
+    spectrum_output   = signal_output.DFT(BUFFER_SIZE);
+    spectrum_demAmpli = signal_demAmpli.DFT(BUFFER_SIZE);
+    spectrum_demPhase = signal_demPhase.DFT(BUFFER_SIZE);
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 
@@ -208,21 +201,21 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cout << "Sauvgarde des signaux" << std::endl;
 
     std::cout << data_filename << ".csv" << std::endl;
-    CSVFile outFile(data_filename+".csv");
-    std::vector<Signal> outSignals;
-    outSignals.emplace_back(signal_output);
-    outSignals.emplace_back(signalLP);
-    outSignals.emplace_back(signal_demAmpli);
-    outSignals.emplace_back(signal_demPhase);
-    outFile.writeSignals(outSignals, Axis::Time); // with time axis
+    CSVFile outFile1(data_filename+".csv");
+    std::vector<Signal> outSig;
+    outSig.emplace_back(signal_output);
+    outSig.emplace_back(signalLP);
+    outSig.emplace_back(signal_demAmpli);
+    outSig.emplace_back(signal_demPhase);
+    outFile1.writeSignals(outSig, true); // with time axis
 
     std::cout << data_filename << "_DFT.csv" << std::endl;
-    CSVFile outFileDFT(data_filename+"_DFT.csv");
-    std::vector<Signal> outSignalsDFT;
-    outSignalsDFT.emplace_back(DFT_signal_output);
-    outSignalsDFT.emplace_back(DFT_signal_demAmpli);
-    outSignalsDFT.emplace_back(DFT_signal_demPhase);
-    outFileDFT.writeSignals(outSignalsDFT, Axis::Freq); // with frequency axis
+    CSVFile outFile2(data_filename+"_DFT.csv");
+    std::vector<Spectrum> outSp;
+    outSp.emplace_back(spectrum_output);
+    outSp.emplace_back(spectrum_demAmpli);
+    outSp.emplace_back(spectrum_demPhase);
+    outFile2.writeSpectrums(outSp, true); // with frequency axis
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
     std::cout << "Test success finish" << std::endl;

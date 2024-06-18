@@ -173,8 +173,9 @@ build/Filter.o: src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp \
  /usr/include/c++/11/bits/ostream.tcc \
  /usr/include/c++/11/bits/istream.tcc \
  /usr/include/c++/11/bits/sstream.tcc /usr/include/c++/11/iostream \
- /usr/include/c++/11/algorithm /usr/include/c++/11/utility \
- /usr/include/c++/11/bits/stl_relops.h \
+ src/Signal.hpp /usr/include/string.h /usr/include/strings.h \
+ src/globals.hpp src/Spectrum.hpp /usr/include/c++/11/algorithm \
+ /usr/include/c++/11/utility /usr/include/c++/11/bits/stl_relops.h \
  /usr/include/c++/11/bits/stl_algo.h \
  /usr/include/c++/11/bits/algorithmfwd.h \
  /usr/include/c++/11/bits/stl_heap.h \
@@ -195,8 +196,7 @@ build/Filter.o: src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp \
  /usr/include/c++/11/bits/erase_if.h \
  /usr/include/c++/11/pstl/execution_defs.h /usr/include/c++/11/numeric \
  /usr/include/c++/11/bits/stl_numeric.h /usr/include/c++/11/bit \
- /usr/include/c++/11/pstl/glue_numeric_defs.h src/Signal.hpp \
- /usr/include/c++/11/optional
+ /usr/include/c++/11/pstl/glue_numeric_defs.h
 src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp :
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h :
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h :
@@ -372,8 +372,9 @@ src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp :
  /usr/include/c++/11/bits/ostream.tcc :
  /usr/include/c++/11/bits/istream.tcc :
  /usr/include/c++/11/bits/sstream.tcc /usr/include/c++/11/iostream :
- /usr/include/c++/11/algorithm /usr/include/c++/11/utility :
- /usr/include/c++/11/bits/stl_relops.h :
+ src/Signal.hpp /usr/include/string.h /usr/include/strings.h :
+ src/globals.hpp src/Spectrum.hpp /usr/include/c++/11/algorithm :
+ /usr/include/c++/11/utility /usr/include/c++/11/bits/stl_relops.h :
  /usr/include/c++/11/bits/stl_algo.h :
  /usr/include/c++/11/bits/algorithmfwd.h :
  /usr/include/c++/11/bits/stl_heap.h :
@@ -394,5 +395,4 @@ src/Filter.cpp /usr/include/stdc-predef.h src/Filter.hpp :
  /usr/include/c++/11/bits/erase_if.h :
  /usr/include/c++/11/pstl/execution_defs.h /usr/include/c++/11/numeric :
  /usr/include/c++/11/bits/stl_numeric.h /usr/include/c++/11/bit :
- /usr/include/c++/11/pstl/glue_numeric_defs.h src/Signal.hpp :
- /usr/include/c++/11/optional :
+ /usr/include/c++/11/pstl/glue_numeric_defs.h :

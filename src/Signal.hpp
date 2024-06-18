@@ -2,13 +2,13 @@
 #define __SIGNAL_HPP
 
 #include <iostream>
+#include <string.h>
 #include <vector>
-#include <complex>
+#include <limits>
 #include <cmath>
-#include <algorithm>
-#include <numeric>
-#include <optional>
-#include <string>
+#include "globals.hpp"
+
+class Spectrum;
 
 enum class WaveformType {
     SINUS,
@@ -21,24 +21,24 @@ enum class WaveformType {
     NEGATIVE_DC,
 };
 
-class Signal : public std::vector<std::complex<double>> {
+class Signal : public std::vector<double> {
 private:
-    double samplingFrequency; // Fréquence d'échantillonnage en Hz
-    std::optional<std::string> name; // Nom optionnel du signal
-
+    double mSamplingFrequency;
+    std::string mName; // Nom du signal (Optionnel)
 public:
-    // Constructeur par défaut
-    Signal();
 
-    // Constructeur prenant une taille initiale, la fréquence d'échantillonnage et éventuellement le nom du signal
-    Signal(size_t size, double samplingFrequency, const std::string& name = std::string());
+    // Constructeur par defaut
+    Signal(const std::string &name = "");
+    
+    // Constructeur
+    Signal(size_t size, double fs = SAMPLING_FREQUENCY, const std::string &name = "");
 
-    Signal(const std::vector<std::complex<double>>& values, double samplingFrequency, const std::string& name = std::string());
+    // Constucteur 
+    Signal(const std::vector<double> &values, double fs = SAMPLING_FREQUENCY, const std::string &name = "");
 
     // Constructeur par recopie
     Signal(const Signal& other);
 
-    // Opérateur d'affectation (ne copie pas le nom du signal)
     Signal& operator=(const Signal& other);
 
     /* ------------------------------- */
@@ -47,12 +47,18 @@ public:
     const std::string &getName() const;
 
     // Méthode pour définir le nom du signal
-    void setName(const std::string &newName);
+    void setName(const std::string &name);
 
     // Retourne la fréquence d'échantillonnage
     double getSamplingFrequency() const;
 
-    std::vector<double> getRealBuffer() const;
+    bool hasInfitityValue() const;
+
+    /* ------------------------------- */
+
+    Signal &addValue(double value);
+
+    Signal &fill(double value = 0.0);
 
     /* ------------------------------- */
 
@@ -83,166 +89,94 @@ public:
     /* ------------------------------- */
 
     // Surcharge de l'opérateur d'addition avec un complexe
-    Signal operator+(const std::complex<double>& value) const;
+    Signal operator+(double value) const;
 
     // Surcharge de l'opérateur de soustraction avec un complexe
-    Signal operator-(const std::complex<double>& value) const;
+    Signal operator-(double value) const;
 
     // Surcharge de l'opérateur de multiplication avec un complexe
-    Signal operator*(const std::complex<double>& value) const;
+    Signal operator*(double value) const;
 
     // Surcharge de l'opérateur de division avec un complexe
-    Signal operator/(const std::complex<double>& value) const;
+    Signal operator/(double value) const;
 
     // Surcharge de l'opérateur += avec un complexe
-    Signal& operator+=(const std::complex<double>& value);
+    Signal& operator+=(double value);
 
     // Surcharge de l'opérateur -= avec un complexe
-    Signal& operator-=(const std::complex<double>& value);
+    Signal& operator-=(double value);
 
     // Surcharge de l'opérateur *= avec un complexe
-    Signal& operator*=(const std::complex<double>& value);
+    Signal& operator*=(double value);
 
     // Surcharge de l'opérateur /= avec un complexe
-    Signal& operator/=(const std::complex<double>& value);
+    Signal& operator/=(double value);
 
     /* ------------------------------- */
 
     // Fonction amie pour l'addition d'un complexe et d'un signal
-    friend Signal operator+(const std::complex<double>& value, const Signal& signal) {
-        return signal + value;
-    }
+    friend Signal operator+(double value, const Signal &input);
 
     // Fonction amie pour la soustraction d'un complexe et d'un signal
-    friend Signal operator-(const std::complex<double>& value, const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = value - signal[i];
-        }
-        return result;
-    }
+    friend Signal operator-(double value, const Signal &input);
 
     // Fonction amie pour la multiplication d'un complexe et d'un signal
-    friend Signal operator*(const std::complex<double>& value, const Signal& signal) {
-        return signal * value;
-    }
+    friend Signal operator*(double value, const Signal &input);
 
     // Fonction amie pour la division d'un complexe et d'un signal
-    friend Signal operator/(const std::complex<double>& value, const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = value / signal[i];
-        }
-        return result;
-    }
+    friend Signal operator/(double value, const Signal &input);
 
     /* ------------------------------- */
+    /* FONCTIONS TRIGONOMETRIQUES */
 
-    friend Signal cos(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::cos(signal[i]);
-        }
-        return result;
-    }
+    Signal cos() const;
 
-    friend Signal sin(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::sin(signal[i]);
-        }
-        return result;
-    }
+    Signal sin() const;
 
-    friend Signal tan(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::tan(signal[i]);
-        }
-        return result;
-    }
+    Signal tan() const;
 
-    friend Signal cosh(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::cosh(signal[i]);
-        }
-        return result;
-    }
+    Signal cosh() const;
 
-    friend Signal sinh(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::sinh(signal[i]);
-        }
-        return result;
-    }
+    Signal sinh() const;
 
-    friend Signal tanh(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::tanh(signal[i]);
-        }
-        
-        return result;
-    }
+    Signal tanh() const;
 
-    friend Signal acos(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::acos(signal[i]);
-        }
-        return result;
-    }
+    Signal acos() const;
 
-    friend Signal asin(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::asin(signal[i]);
-        }
-        return result;
-    }
+    Signal asin() const;
 
-    friend Signal atan(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::atan(signal[i]);
-        }
-        
-        return result;
-    }
+    Signal atan() const;
 
-    friend Signal acosh(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::acosh(signal[i]);
-        }
-        return result;
-    }
+    Signal acosh() const;
 
-    friend Signal asinh(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::asinh(signal[i]);
-        }
-        return result;
-    }
+    Signal asinh() const;
 
-    friend Signal atanh(const Signal& signal) {
-        Signal result(signal.size(), signal.samplingFrequency);
-        for (size_t i = 0; i < signal.size(); ++i) {
-            result[i] = std::atanh(signal[i]);
-        }
-        
-        return result;
-    }
+    Signal atanh() const;
 
-    /* ------------------------------- */
+    friend Signal cos(const Signal &input) { return input.cos(); }
 
-    // Générer une forme périodique au signal
-    void generateWaveform(WaveformType type, double amplitude, double frequency,
-        double phase = 0.0, double offset = 0.0, double delay = 0.0, double duty_cycle = 50.0);
-    
+    friend Signal sin(const Signal &input) { return input.sin(); }
+
+    friend Signal tan(const Signal &input) { return input.tan(); }
+
+    friend Signal cosh(const Signal &input) { return input.cosh(); }
+
+    friend Signal sinh(const Signal &input) { return input.sinh(); }
+
+    friend Signal tanh(const Signal &input) { return input.tanh(); }
+
+    friend Signal acos(const Signal &input) { return input.acos(); }
+
+    friend Signal asin(const Signal &input) { return input.asin(); }
+
+    friend Signal atan(const Signal &input) { return input.atan(); }
+
+    friend Signal acosh(const Signal &input) { return input.acosh(); }
+
+    friend Signal asinh(const Signal &input) { return input.asinh(); }
+
+    friend Signal atanh(const Signal &input) { return input.atanh(); }
+
     /* ------------------------------- */
 
     // Fonction pour mettre au carré chaque élément du signal
@@ -257,37 +191,72 @@ public:
     // Fonction pour calculer le logarithme naturel de chaque élément du signal
     Signal log() const;
 
+    // Fonction pour calculer le logarithme binaire de chaque élément du signal
+    Signal log2() const;
+
     // Fonction pour calculer le logarithme décimal de chaque élément du signal
     Signal log10() const;
 
     // Fonction pour calculer l'exponentielle de chaque élément du signal
     Signal exp() const;
 
+    friend Signal square(const Signal &input) { return input.square(); }
+
+    friend Signal pow(const Signal &input, double exponent) { return input.pow(exponent); }
+
+    friend Signal sqrt(const Signal &input) { return input.sqrt(); }
+
+    friend Signal log(const Signal &input) { return input.log(); }
+
+    friend Signal log2(const Signal &input) { return input.log2(); }
+
+    friend Signal log10(const Signal &input) { return input.log10(); }
+
+    friend Signal exp(const Signal &input) { return input.exp(); }
+
     /* ------------------------------- */
 
     // Fonction pour calculer le maximum du signal
-    std::complex<double> max() const;
+    double max() const;
 
     // Fonction pour calculer le minimum du signal
-    std::complex<double> min() const;
+    double min() const;
 
     // Fonction pour calculer la moyenne du signal
-    std::complex<double> mean() const;
-    
-    /* ------------------------------- */
+    double mean() const;
 
-    // Fonction pour effectuer la transformée de Fourier discrète  rapide(DFT) et générer le spectre
-    Signal DFT(size_t size_zero_padding = 0) const;
+    friend double max(const Signal &input) { return input.max(); }
 
-    // Fonction pour effectuer la transformée de Fourier inverse rapide (IDFT) et reconstruire le signal
-    Signal IDFT(size_t size_zero_padding = 0) const;
+    friend double min(const Signal &input) { return input.min(); }
 
-    // Générer un axe fréquentiel en fonction de la fréquence d'échantillonnage
-    void generateFrequencyAxis();
+    friend double mean(const Signal &input) { return input.mean(); }
 
     /* ------------------------------- */
-    // Fonction pour afficher le signal
-    void display() const;
+
+    bool operator < (const Signal &input) const;
+
+    bool operator <= (const Signal &input) const;
+
+    bool operator > (const Signal &input) const;
+
+    bool operator >= (const Signal &input) const;
+
+    bool operator == (const Signal &input) const;
+
+    bool operator != (const Signal &input) const;
+
+    /* ------------------------------- */
+
+    void generateWaveform(WaveformType type = WaveformType::SINUS, double amplitude = 1.0, double frequency = 1e3, double phase = 0.0, double offset = 0.0, double delay = 0.0, double duty_cycle = 50.0);
+
+    /* ------------------------------- */
+
+    // Fonction pour effectuer la transformée de Fourier discrète rapide(DFT) et générer le spectre
+    Spectrum DFT(size_t size_zero_padding = 0) const;
+
+    /* ------------------------------- */
+
+    friend std::ostream& operator << (std::ostream &out, const Signal &signal);
 };
 
 #endif // __SIGNAL_HPP

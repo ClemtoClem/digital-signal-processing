@@ -66,19 +66,15 @@ void IIRFilter::setup() {
 
         switch (mAnalogFilter) {
             case AnalogFilter::BESSEL:
-                //BesselAnalogPrototype(mOrder, _z, _p, _k);
                 break;
             case AnalogFilter::BUTTERWORTH:
                 ButterworthCoefficients();
                 break;
             case AnalogFilter::CHEBYSHEV1:
-                //Chebyshev1AnalogPrototype(mOrder, _z, _p, _k);
                 break;
             case AnalogFilter::CHEBYSHEV2:
-                //Chebyshev2AnalogPrototype(mOrder, _z, _p, _k);
                 break;
             case AnalogFilter::ELLIPTIC:
-                //EllipticAnalogPrototype(mOrder, _z, _p, _k);
                 break;
             default:
                 throw std::invalid_argument("Unknown analog filter type");
@@ -107,12 +103,12 @@ Signal IIRFilter::process(const Signal &input) {
     return output;
 }
 
-Signal IIRFilter::frequency_response(size_t num_points) {
+Spectrum IIRFilter::frequency_response(size_t num_points) {
     if (!mIsSetup) {
         throw std::invalid_argument("Filter is not set up");
     }
 
-    Signal response(num_points, mFs);
+    Spectrum response(num_points, mFs);
     for (size_t i = 0; i < num_points; ++i) {
         double omega = 2.0 * M_PI * static_cast<double>(i) / num_points;
         std::complex<double> numerator(0.0, 0.0);

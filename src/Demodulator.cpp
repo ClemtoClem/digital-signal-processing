@@ -28,6 +28,6 @@ void Demodulator::demodulate(Signal &signal, Signal &outputAmplitude, Signal &ou
     outputPhase.resize(signal.size());
     for (size_t i = 0; i<tempPhi.size(); i++) {
         outputAmplitude[i] = std::sqrt(2.0*tempA[i]*tempA[i] + 2.0*tempPhi[i]*tempPhi[i]);
-        outputPhase[i] = (tempA[i] != 0.0)? atan2(tempPhi[i].real(), tempA[i].real()) : 0.0;
+        outputPhase[i] = (tempA[i] != 0.0)? atan2(tempPhi[i], tempA[i]) : 0.0;
     }
 }
