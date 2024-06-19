@@ -596,6 +596,18 @@ Spectrum Signal::DFT(size_t size_zero_padding) const {
 
 /* ------------------------------- */
 
+double Signal::calculateNoiseRMS() const {
+    double mean = this->mean();
+    double sum_squares = 0.0;
+    for (double value : *this) {
+        double noise = value - mean;
+        sum_squares += noise * noise;
+    }
+    return std::sqrt(sum_squares / this->size());
+}
+
+/* ------------------------------- */
+
 std::ostream &operator<<(std::ostream &out, const Signal &signal) {
     out << signal.getName() << "{";
     for (size_t i = 0; i < signal.size(); i++) {

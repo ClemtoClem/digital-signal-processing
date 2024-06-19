@@ -22,11 +22,17 @@ public:
     // Method to write signals to a CSV file
     void writeSignals(const std::vector<Signal> &signals, bool axis = true);
 
+    // Method to append signals to a CSV file
+    void appendSignals(const std::vector<Signal> &signals);
+
     // Method to read spectrums from a CSV file
     std::vector<Spectrum> readSpectrums(double samplingFrequency = SAMPLING_FREQUENCY);
 
     // Method to write spectrums to a CSV file
     void writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis = true);
+
+    // Method to append spectrums to a CSV file
+    void appendSpectrums(const std::vector<Spectrum> &spectrums);
 
 private:
     // Utility function to parse a complex number from a string

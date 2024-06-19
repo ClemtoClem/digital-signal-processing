@@ -256,6 +256,11 @@ public:
 
     /* ------------------------------- */
 
+    // Calculer le niveau RMS du bruit
+    double calculateNoiseRMS() const;
+
+    /* ------------------------------- */
+
     friend std::ostream& operator << (std::ostream &out, const Signal &signal);
 };
 

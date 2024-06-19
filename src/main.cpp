@@ -195,13 +195,18 @@ int test_demodulate(int argc, char *argv[]) try {
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 
+    // Calculer et afficher le niveau de bruit RMS
+    double noiseRMS = signal_output.calculateNoiseRMS();
+    std::cout << "Niveau de bruit RMS: " << noiseRMS << std::endl;
+
+    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
     /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* Sauvgarde des signaux */
 
     std::cout << "Sauvgarde des signaux" << std::endl;
 
-    std::cout << data_filename << ".csv" << std::endl;
-    CSVFile outFile1(data_filename+".csv");
+    std::cout << data_filename << "_signals.csv" << std::endl;
+    CSVFile outFile1(data_filename+"_signals.csv");
     std::vector<Signal> outSig;
     outSig.emplace_back(signal_output);
     outSig.emplace_back(signalLP);
@@ -209,8 +214,8 @@ int test_demodulate(int argc, char *argv[]) try {
     outSig.emplace_back(signal_demPhase);
     outFile1.writeSignals(outSig, true); // with time axis
 
-    std::cout << data_filename << "_DFT.csv" << std::endl;
-    CSVFile outFile2(data_filename+"_DFT.csv");
+    std::cout << data_filename << "_spectrums.csv" << std::endl;
+    CSVFile outFile2(data_filename+"_spectrums.csv");
     std::vector<Spectrum> outSp;
     outSp.emplace_back(spectrum_output);
     outSp.emplace_back(spectrum_demAmpli);

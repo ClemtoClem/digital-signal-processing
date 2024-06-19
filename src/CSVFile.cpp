@@ -61,8 +61,8 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals, bool axis) {
         if (axis) { // time
             axis_value = i / signals[0].getSamplingFrequency(); 
             mFileStream << axis_value;
+            if (nbSignals != 0) mFileStream << ",";
         }
-        if (nbSignals != 0) mFileStream << ",";
         for (size_t s = 0; s < nbSignals; s++) {
             if (i < signals[s].size()) {
                 mFileStream << signals[s][i];
@@ -75,6 +75,55 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals, bool axis) {
     }
     mFileStream.close();
 }
+
+void CSVFile::appendSignals(const std::vector<Signal> &signals) {
+    if (signals.empty()) {
+        throw std::invalid_argument("No signals provided");
+    }
+
+    std::fstream inFile(mFilename, std::ios::in);
+    if (!inFile.is_open()) {
+        throw std::ios_base::failure("Failed to open file for reading");
+    }
+
+    std::vector<std::string> lines;
+    std::string line;
+
+    // Read all lines from the file
+    while (std::getline(inFile, line)) {
+        lines.push_back(line);
+    }
+    inFile.close();
+
+    // Re-open the file in write mode to overwrite it
+    mFileStream.open(mFilename, std::ios::out);
+    if (!mFileStream.is_open()) {
+        throw std::ios_base::failure("Failed to open file for writing");
+    }
+
+    // Write the updated header
+    line = lines[0];
+    for (const auto &signal : signals) {
+        line += "," + signal.getName();
+    }
+    mFileStream << line << "\n";
+
+    // Write the updated data lines
+    for (size_t i = 1; i < lines.size(); ++i) {
+        line = lines[i];
+        size_t pos = 0;
+        for (const auto &signal : signals) {
+            pos = line.find(",", pos);
+            if (pos != std::string::npos) {
+                line.insert(pos + 1, std::to_string(signal[i - 1]) + ",");
+            }
+        }
+        mFileStream << line << "\n";
+    }
+
+    mFileStream.close();
+}
+
 
 std::vector<Spectrum> CSVFile::readSpectrums(double samplingFrequency) {
     mFileStream.open(mFilename, std::ios::in);
@@ -135,8 +184,8 @@ void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis) 
         if (axis) { // frequency
             axis_value = i * spectrums[0].getSamplingFrequency() / maxSize;
             mFileStream << axis_value;
+            if (nbSpectrums != 0) mFileStream << ",";
         }
-        if (nbSpectrums != 0) mFileStream << ",";
         for (size_t s = 0; s < nbSpectrums; s++) {
             if (i < spectrums[s].size()) {
                 const complexd &c = spectrums[s][i];
@@ -164,4 +213,97 @@ complexd CSVFile::parseComplex(const std::string &str) {
         real = std::stod(str);
     }
     return complexd(real, imag);
+}
+
+void CSVFile::appendSpectrums(const std::vector<Spectrum> &spectrums) {
+    mFileStream.open(mFilename, std::ios::in);
+    if (!mFileStream.is_open()) {
+        throw std::ios_base::failure("Failed to open file");
+    }
+
+    if (spectrums.empty()) {
+        throw std::invalid_argument("No spectrums provided");
+    }
+
+    // Read the existing content
+    std::vector<std::string> lines;
+    std::string line;
+    size_t maxLines = 0;
+
+    // Read existing lines
+    while (std::getline(mFileStream, line)) {
+        lines.push_back(line);
+        if (lines.size() > 1) { // Ignore the header line for maxLines calculation
+            ++maxLines;
+        }
+    }
+
+    // Close and reopen the file to write
+    mFileStream.close();
+    mFileStream.open(mFilename, std::ios::app);
+    if (!mFileStream.is_open()) {
+        throw std::ios_base::failure("Failed to reopen file");
+    }
+
+    // Process the header
+    std::stringstream ssHeader(lines[0]);
+    std::string header;
+    std::getline(ssHeader, header, '\n');
+    std::string newHeader = header;
+
+    for (const auto &spectrum : spectrums) {
+        newHeader += "," + spectrum.getName();
+    }
+    mFileStream << newHeader << "\n";
+
+    size_t spectrumMaxSize = 0;
+    for (const auto &spectrum : spectrums) {
+        if (spectrum.size() > spectrumMaxSize) {
+            spectrumMaxSize = spectrum.size();
+        }
+    }
+
+    // Process each line, appending new spectrum data or filling with zeros
+    for (size_t i = 1; i <= maxLines; ++i) {
+        std::stringstream ssLine(lines[i]);
+        std::string lineData;
+        std::getline(ssLine, lineData, '\n');
+        mFileStream << lineData;
+
+        for (const auto &spectrum : spectrums) {
+            mFileStream << ",";
+            if (i - 1 < spectrum.size()) {
+                const complexd &c = spectrum[i - 1];
+                mFileStream << c.real();
+                if (c.imag() != 0) {
+                    mFileStream << (c.imag() >= 0 ? "+" : "") << c.imag() << "j";
+                }
+            } else {
+                mFileStream << "0";
+            }
+        }
+        mFileStream << "\n";
+    }
+
+    // Add any remaining data from the new spectrums that exceed existing lines
+    for (size_t i = maxLines; i < spectrumMaxSize; ++i) {
+        double freq = i * spectrums[0].getSamplingFrequency() / spectrumMaxSize;
+        mFileStream << freq;
+
+        for (const auto &spectrum : spectrums) {
+            mFileStream << ",";
+            if (i < spectrum.size()) {
+                const complexd &c = spectrum[i];
+                mFileStream << c.real();
+                if (c.imag() != 0) {
+                    mFileStream << c;
+                }
+            } else {
+                mFileStream << "0";
+            }
+        }
+        mFileStream << "\n";
+    }
+
+    mFileStream.close();
 }
