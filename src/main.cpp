@@ -6,7 +6,7 @@
 #include "Filter.hpp"
 #include "Noise.hpp"
 #include "Demodulator.hpp"
-
+#include "PID.hpp"
 
 int parseExponentNumber(const std::string &expStr) {
     double number;
@@ -231,6 +231,41 @@ int test_demodulate(int argc, char *argv[]) try {
     return 1;
 }
 
+int test_PID(int argc, char *argv[]) {
+    SetDecimation(16);
+    SetBufferSize(1 << 14);
+
+
+    std::cout << "Test PID" << std::endl;
+    std::cout << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
+
+    Signal signal_input("input(t)");
+    Signal signal_desired("desired(t)");
+    Signal signal_output("output(t)");
+
+    signal_input.generateWaveform(WaveformType::POSITIVE_DC, 0.1);
+    signal_desired.generateWaveform(WaveformType::POSITIVE_DC, 0.5);
+
+    PID pid;
+    pid.set(0.25, 1, 0, 100, -1, 1);
+
+    for (size_t i = 0; i < signal_input.size(); i++) {
+        signal_output[i] = pid.process(signal_desired[i], signal_input[i]);
+    }
+
+    CSVFile outFile("./data/test_PID.csv");
+    std::vector<Signal> outSig;
+    outSig.emplace_back(signal_input);
+    outSig.emplace_back(signal_desired);
+    outSig.emplace_back(signal_output);
+    outFile.writeSignals(outSig, true); // with time axis
+
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
-    return test_demodulate(argc, argv);
+    int ret = 0;
+    //ret |= test_demodulate(argc, argv);
+    ret |= test_PID(argc, argv);
+    return ret;
 }
