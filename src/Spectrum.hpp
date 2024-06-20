@@ -12,7 +12,6 @@ class Signal;
 
 class Spectrum : public std::vector<complexd> {
 private:
-    double mSamplingFrequency;
     std::string mName; // Nom du spectre (Optionnel)
 public:
 
@@ -20,10 +19,10 @@ public:
     Spectrum(const std::string &name = "");
     
     // Constructeur
-    Spectrum(size_t size, double fs = SAMPLING_FREQUENCY, const std::string &name = "");
+    Spectrum(size_t size, const std::string &name = "");
 
     // Constucteur 
-    Spectrum(const std::vector<complexd> &values, double fs = SAMPLING_FREQUENCY, const std::string &name = "");
+    Spectrum(const std::vector<complexd> &values, const std::string &name = "");
 
     // Constructeur par recopie
     Spectrum(const Spectrum& other);
@@ -37,9 +36,6 @@ public:
 
     // Méthode pour définir le nom du spectre
     void setName(const std::string &name);
-
-    // Retourne la fréquence d'échantillonnage
-    double getSamplingFrequency() const;
 
     bool hasInfitityValue() const;
 

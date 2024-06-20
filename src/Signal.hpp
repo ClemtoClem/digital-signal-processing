@@ -23,7 +23,6 @@ enum class WaveformType {
 
 class Signal : public std::vector<double> {
 private:
-    double mSamplingFrequency;
     std::string mName; // Nom du signal (Optionnel)
 public:
 
@@ -31,10 +30,10 @@ public:
     Signal(const std::string &name = "");
     
     // Constructeur
-    Signal(size_t size, double fs = SAMPLING_FREQUENCY, const std::string &name = "");
+    Signal(size_t size, const std::string &name = "");
 
     // Constucteur 
-    Signal(const std::vector<double> &values, double fs = SAMPLING_FREQUENCY, const std::string &name = "");
+    Signal(const std::vector<double> &values, const std::string &name = "");
 
     // Constructeur par recopie
     Signal(const Signal& other);
@@ -48,9 +47,6 @@ public:
 
     // Méthode pour définir le nom du signal
     void setName(const std::string &name);
-
-    // Retourne la fréquence d'échantillonnage
-    double getSamplingFrequency() const;
 
     bool hasInfitityValue() const;
 

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.widgets import Button
+from matplotlib.widgets import Button, TextBox
+from scipy.signal import find_peaks
 
 # Fonction pour lire les signaux à partir du fichier CSV
 def read_csv(filename):
@@ -40,7 +41,7 @@ def plot_signals(ax: plt.Axes, signals: dict):
     ax.grid(True)
 
 # Fonction pour afficher les FFT avec des axes logarithmiques
-def plot_fft_signals(ax_mag: plt.Axes, ax_phase: plt.Axes, fft_signals: dict):
+def plot_fft_signals(ax: plt.Axes, fft_signals: dict, min_freq=None, max_freq=None):
     if len(fft_signals) == 0 or "freq" not in fft_signals.keys():
         return
 
@@ -48,21 +49,30 @@ def plot_fft_signals(ax_mag: plt.Axes, ax_phase: plt.Axes, fft_signals: dict):
     for signal_name, signal_data in fft_signals.items():
         if signal_name.lower() != "freq":
             magnitude_spectrum = np.abs(np.imag(signal_data))
-            phase_spectrum = np.angle(np.imag(signal_data))
-            ax_mag.semilogx(fft_signals["freq"], magnitude_spectrum, label=signal_name)
-            ax_phase.semilogx(fft_signals["freq"], phase_spectrum, label=signal_name)
+            ax.loglog(fft_signals["freq"], magnitude_spectrum, label=signal_name)
 
-    ax_mag.set_xlabel('Frequency (Hz)')
-    ax_mag.set_ylabel('Magnitude')
-    ax_mag.set_title('FFT Magnitude')
-    ax_mag.legend()
-    ax_mag.grid(True)
+            if min_freq is not None and max_freq is not None:
+                indices = np.where((fft_signals["freq"] >= min_freq) & (fft_signals["freq"] <= max_freq))
+                selected_freqs = fft_signals["freq"][indices]
+                selected_magnitudes = magnitude_spectrum[indices]
+                
+                peaks, _ = find_peaks(selected_magnitudes)
+                peak_freqs = selected_freqs[peaks]
+                peak_magnitudes = selected_magnitudes[peaks]
 
-    ax_phase.set_xlabel('Frequency (Hz)')
-    ax_phase.set_ylabel('Phase (radians)')
-    ax_phase.set_title('FFT Phase')
-    ax_phase.legend()
-    ax_phase.grid(True)
+                ax.plot(peak_freqs, peak_magnitudes, 'ro', label='Peaks')
+                for i, freq in enumerate(peak_freqs):
+                    ax.text(freq, peak_magnitudes[i], f'{freq:.1f} Hz', color='red')
+
+                # Ajouter des lignes pointillées aux positions des fréquences min et max
+                ax.axvline(min_freq, color='r', linestyle='--', label='Min Freq')
+                ax.axvline(max_freq, color='g', linestyle='--', label='Max Freq')
+
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel('dB')
+    ax.set_title('FFT dB')
+    ax.legend()
+    ax.grid(True)
 
 def calculate_rise_time(time, signal):
     min_val = np.min(signal)
@@ -96,34 +106,44 @@ def plot_signal_with_rise_time(ax: plt.Axes, signals: dict, signal_name: str):
     ax.grid(True)
 
 # Fonction pour basculer entre l'affichage des signaux et des FFT
-def toggle_plot(event):
+def toggle_plot(event, next=True):
     global current_plot_index
-    current_plot_index = (current_plot_index + 1) % 3
+    if next:
+        current_plot_index = (current_plot_index + 1) % 3
     ax.clear()
-    ax_mag.clear()
-    ax_phase.clear()
+    ax.set_visible(True)
+    set_widgets_visibility()
     if current_plot_index == 0:
         toggle_button.label.set_text("Voir temps de montée")
         plot_signals(ax, signals)
-        ax.set_visible(True)
-        ax_mag.set_visible(False)
-        ax_phase.set_visible(False)
     elif current_plot_index == 1:
         toggle_button.label.set_text("Voir FFT")
         plot_signal_with_rise_time(ax, signals, "amplitude(t)")
     else:
         toggle_button.label.set_text("Voir signaux")
-        plot_fft_signals(ax_mag, ax_phase, fft_signals)
-        ax.set_visible(False)
-        ax_mag.set_visible(True)
-        ax_phase.set_visible(True)
+        plot_fft_signals(ax, fft_signals)
     plt.draw()  # Rafraîchir l'écran
 
+def set_widgets_visibility():
+    visible: bool = (current_plot_index == 2)
+    min_freq_text_box_ax.set_visible(visible)
+    max_freq_text_box_ax.set_visible(visible)
+    apply_button_ax.set_visible(visible)
+
+def update_freq_range(event):
+    global min_freq, max_freq
+    try:
+        min_freq = float(min_freq_text_box.text)
+        max_freq = float(max_freq_text_box.text)
+        toggle_plot(None, False)  # Mettre à jour l'affichage des FFT avec la nouvelle plage de fréquences
+    except ValueError:
+        print("Entrée non valide pour les fréquences")
+
 # Nom du fichier CSV contenant les signaux
-filename = './data/test.csv'
+filename = './data/test_signals.csv'
 
 # Nom du fichier CSV contenant les FFT
-fft_filename = './data/test_DFT.csv'
+fft_filename = './data/test_spectrums.csv'
 
 # Lecture des signaux à partir du fichier CSV
 signals = read_csv(filename)
@@ -134,13 +154,24 @@ fft_signals = read_csv(fft_filename)
 # Création de la figure et des sous-graphiques
 fig, ax = plt.subplots()
 gs = fig.add_gridspec(2, hspace=0.3)
-ax_mag: plt.Axes = fig.add_subplot(gs[0, 0])
-ax_phase: plt.Axes = fig.add_subplot(gs[1, 0])
 
 # Ajout du bouton pour basculer entre les affichages des signaux et des FFT
 toggle_button_ax = plt.axes([0.88, 0.01, 0.1, 0.075])
 toggle_button = Button(toggle_button_ax, 'Voir FFT')
 toggle_button.on_clicked(toggle_plot)
+
+# Ajout des zones de saisie pour la plage de fréquences
+min_freq_text_box_ax = plt.axes([0.1, 0.01, 0.1, 0.05])
+min_freq_text_box = TextBox(min_freq_text_box_ax, 'Min Freq (Hz)', initial="0.0")
+max_freq_text_box_ax = plt.axes([0.3, 0.01, 0.1, 0.05])
+max_freq_text_box = TextBox(max_freq_text_box_ax, 'Max Freq (Hz)', initial="1000.0")
+apply_button_ax = plt.axes([0.5, 0.01, 0.1, 0.05])
+apply_button = Button(apply_button_ax, 'Apply')
+apply_button.on_clicked(update_freq_range)
+
+# Variables globales pour la plage de fréquences
+min_freq = 0.0
+max_freq = 1000.0
 
 # Affichage initial des signaux
 current_plot_index = -1

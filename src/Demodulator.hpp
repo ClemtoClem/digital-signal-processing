@@ -9,12 +9,11 @@ class Signal;
 
 class Demodulator {
 public:
-	Demodulator(int freq_filter, int freq_oscillator, int sample_freq);
+	Demodulator(double freq_filter, double freq_oscillator);
     void setup();
 	void demodulate(Signal &signal, Signal &outputAmplitude, Signal &outputPhase);
 private:
-	int mFreqFilter, mFreqOscillator;
-	int mSampleFreq;
+	double mFreqFilter, mFreqOscillator;
     IIRFilter mFilter;
 };
 

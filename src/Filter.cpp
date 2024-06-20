@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <numeric>
 #include "Signal.hpp"
+#include "globals.hpp"
 
 IIRFilter::IIRFilter() : mIsSetup(false) {}
 
@@ -9,7 +10,7 @@ IIRFilter::~IIRFilter() {
     // Destructor logic if needed (automatic cleanup of vectors)
 }
 
-bool IIRFilter::set(int order, int fc1, int fc2, int fs, FilterGabarit gabarit, AnalogFilter analogFilter, int rp, int rs)
+bool IIRFilter::set(int order, int fc1, int fc2, FilterGabarit gabarit, AnalogFilter analogFilter, int rp, int rs)
 {
     if (order < 1) {
         std::cerr << "Warning: L'ordre du filtre doit être supérieur ou égal à 1.\n";
@@ -27,7 +28,6 @@ bool IIRFilter::set(int order, int fc1, int fc2, int fs, FilterGabarit gabarit, 
     mOrder = order;
     mFc1 = fc1;
     mFc2 = fc2;
-    mFs = fs;
     mGabarit = gabarit;
     mAnalogFilter = analogFilter;
     mRp = rp; // passband ripple      (Chebyshev I, Chebyshev II & elliptic filter)
@@ -89,7 +89,7 @@ Signal IIRFilter::process(const Signal &input) {
         throw std::invalid_argument("Filter is not set up");
     }
 
-    Signal output(input.size(), mFs);
+    Signal output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = _b[0] * input[i];
         for (size_t j = 1; j < 3*static_cast<size_t>(mOrder); j++) {
@@ -108,7 +108,7 @@ Spectrum IIRFilter::frequency_response(size_t num_points) {
         throw std::invalid_argument("Filter is not set up");
     }
 
-    Spectrum response(num_points, mFs);
+    Spectrum response(num_points);
     for (size_t i = 0; i < num_points; ++i) {
         double omega = 2.0 * M_PI * static_cast<double>(i) / num_points;
         std::complex<double> numerator(0.0, 0.0);
@@ -130,8 +130,8 @@ Spectrum IIRFilter::frequency_response(size_t num_points) {
 
 void IIRFilter::ButterworthCoefficients()
 {
-    double wc1 = 2 * M_PI * mFc1 / mFs;
-    double wc2 = 2 * M_PI * mFc2 / mFs;
+    double wc1 = 2 * M_PI * mFc1 / SAMPLING_FREQUENCY;
+    double wc2 = 2 * M_PI * mFc2 / SAMPLING_FREQUENCY;
     double B, W0;
 
     if (mGabarit == FilterGabarit::BAND_PASS || mGabarit == FilterGabarit::BAND_STOP) {

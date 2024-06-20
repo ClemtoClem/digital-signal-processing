@@ -6,18 +6,27 @@
 
 using complexd = std::complex<double>;
 
-inline size_t DECIMATION = 16;
+inline unsigned int DECIMATION = 16;
 inline double MAX_SAMPLING_FREQUENCY = 125e6;
 inline double SAMPLING_FREQUENCY = MAX_SAMPLING_FREQUENCY / DECIMATION;
 inline size_t BUFFER_SIZE = 1 << 14;
 inline size_t MAX_SIGNAL_SIZE = 1 << 14;
 
 inline void SetMaxSampleFrequency(size_t freq) {
+    if (MAX_SAMPLING_FREQUENCY <= 0.0) {
+        std::cerr << "Sampling frequency must be greater than zero" << std::endl;
+        return;
+    }
     MAX_SAMPLING_FREQUENCY = freq;
     SAMPLING_FREQUENCY = MAX_SAMPLING_FREQUENCY/DECIMATION;
 }
 
-inline void SetDecimation(size_t decimation) {
+inline void SetDecimation(unsigned int decimation) {
+    // vérifier que la décimation est une puissance de 2
+    if (decimation != 0 && (decimation & (decimation - 1)) != 0) {
+        std::cerr << "Decimation must be a power of 2" << std::endl;
+        return;
+    }
     DECIMATION = decimation;
     SAMPLING_FREQUENCY = MAX_SAMPLING_FREQUENCY/DECIMATION;
 }

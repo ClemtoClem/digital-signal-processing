@@ -1,18 +1,17 @@
 #include "Signal.hpp"
 #include "Spectrum.hpp"
 
-Signal::Signal(const std::string &name) : std::vector<double>(BUFFER_SIZE, 0.0), mSamplingFrequency(SAMPLING_FREQUENCY), mName(name) {}
+Signal::Signal(const std::string &name) : std::vector<double>(BUFFER_SIZE, 0.0), mName(name) {}
 
-Signal::Signal(size_t size, double fs, const std::string &name) : std::vector<double>(size), mSamplingFrequency(std::abs(fs)), mName(name) {}
+Signal::Signal(size_t size, const std::string &name) : std::vector<double>(size), mName(name) {}
 
-Signal::Signal(const std::vector<double> &values, double fs, const std::string &name) : std::vector<double>(values), mSamplingFrequency(std::abs(fs)), mName(name) {}
+Signal::Signal(const std::vector<double> &values, const std::string &name) : std::vector<double>(values), mName(name) {}
 
-Signal::Signal(const Signal &other) : std::vector<double>(other), mSamplingFrequency(other.mSamplingFrequency), mName(other.mName) {}
+Signal::Signal(const Signal &other) : std::vector<double>(other), mName(other.mName) {}
 
 Signal &Signal::operator=(const Signal &other) {
     if (this != &other) {
         std::vector<double>::operator=(other);
-        mSamplingFrequency = mSamplingFrequency;
     }
     return *this;
 }
@@ -25,10 +24,6 @@ const std::string &Signal::getName() const {
 
 void Signal::setName(const std::string &name) {
     mName = name;
-}
-
-double Signal::getSamplingFrequency() const {
-    return mSamplingFrequency;
 }
 
 bool Signal::hasInfitityValue() const {
@@ -58,7 +53,7 @@ Signal &Signal::fill(double value)
 /* ------------------------------- */
 
 Signal Signal::operator+(const Signal &other) const {
-    Signal output(other.size(), mSamplingFrequency);
+    Signal output(other.size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] + other[i];
     }
@@ -66,7 +61,7 @@ Signal Signal::operator+(const Signal &other) const {
 }
 
 Signal Signal::operator-(const Signal &other) const {
-    Signal output(other.size(), mSamplingFrequency);
+    Signal output(other.size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] - other[i];
     }
@@ -74,7 +69,7 @@ Signal Signal::operator-(const Signal &other) const {
 }
 
 Signal Signal::operator*(const Signal &other) const {
-    Signal output(other.size(), mSamplingFrequency);
+    Signal output(other.size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] * other[i];
     }
@@ -82,7 +77,7 @@ Signal Signal::operator*(const Signal &other) const {
 }
 
 Signal Signal::operator/(const Signal &other) const {
-    Signal output(other.size(), mSamplingFrequency);
+    Signal output(other.size());
     for (size_t i = 0; i < size(); i++) {
         if (other[i] == 0) output[i] = INFINITY;
         else output[i] = (*this)[i] / other[i];
@@ -122,7 +117,7 @@ Signal &Signal::operator/=(const Signal &other) {
 /* ------------------------------- */
 
 Signal Signal::operator+(double value) const {
-    Signal output(size(), mSamplingFrequency);
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] + value;
     }
@@ -130,7 +125,7 @@ Signal Signal::operator+(double value) const {
 }
 
 Signal Signal::operator-(double value) const {
-    Signal output(size(), mSamplingFrequency);
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] - value;
     }
@@ -138,7 +133,7 @@ Signal Signal::operator-(double value) const {
 }
 
 Signal Signal::operator*(double value) const {
-    Signal output(size(), mSamplingFrequency);
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] * value;
     }
@@ -146,7 +141,7 @@ Signal Signal::operator*(double value) const {
 }
 
 Signal Signal::operator/(double value) const {
-    Signal output(size(), mSamplingFrequency);
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         if (value == 0) output[i] = INFINITY;
         else output[i] = (*this)[i] / value;
@@ -186,7 +181,7 @@ Signal &Signal::operator/=(double value) {
 /* ------------------------------- */
 
 Signal operator+(double value, const Signal &input) {
-    Signal output(input.size(), input.getSamplingFrequency());
+    Signal output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = input[i] + value;
     }
@@ -194,7 +189,7 @@ Signal operator+(double value, const Signal &input) {
 }
 
 Signal operator-(double value, const Signal &input) {
-    Signal output(input.size(), input.getSamplingFrequency());
+    Signal output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = input[i] - value;
     }
@@ -202,7 +197,7 @@ Signal operator-(double value, const Signal &input) {
 }
 
 Signal operator*(double value, const Signal &input) {
-    Signal output(input.size(), input.getSamplingFrequency());
+    Signal output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = input[i] * value;
     }
@@ -210,7 +205,7 @@ Signal operator*(double value, const Signal &input) {
 }
 
 Signal operator/(double value, const Signal &input) {
-    Signal output(input.size(), input.getSamplingFrequency());
+    Signal output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         if (value == 0) output[i] = INFINITY;
         else output[i] = input[i] / value;
@@ -221,7 +216,7 @@ Signal operator/(double value, const Signal &input) {
 /* ------------------------------- */
 
 Signal Signal::cos() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::cos((*this)[i]);
     }
@@ -229,7 +224,7 @@ Signal Signal::cos() const {
 }
 
 Signal Signal::sin() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::sin((*this)[i]);
     }
@@ -237,7 +232,7 @@ Signal Signal::sin() const {
 }
 
 Signal Signal::tan() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::tan((*this)[i]);
     }
@@ -245,7 +240,7 @@ Signal Signal::tan() const {
 }
 
 Signal Signal::cosh() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::cosh((*this)[i]);
     }
@@ -253,7 +248,7 @@ Signal Signal::cosh() const {
 }
 
 Signal Signal::sinh() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::sinh((*this)[i]);
     }
@@ -261,7 +256,7 @@ Signal Signal::sinh() const {
 }
 
 Signal Signal::tanh() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::tanh((*this)[i]);
     }
@@ -269,7 +264,7 @@ Signal Signal::tanh() const {
 }
 
 Signal Signal::acos() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::acos((*this)[i]);
     }
@@ -277,7 +272,7 @@ Signal Signal::acos() const {
 }
 
 Signal Signal::asin() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::asin((*this)[i]);
     }
@@ -285,7 +280,7 @@ Signal Signal::asin() const {
 }
 
 Signal Signal::atan() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::atan((*this)[i]);
     }
@@ -293,7 +288,7 @@ Signal Signal::atan() const {
 }
 
 Signal Signal::acosh() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::acosh((*this)[i]);
     }
@@ -301,7 +296,7 @@ Signal Signal::acosh() const {
 }
 
 Signal Signal::asinh() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::asinh((*this)[i]);
     }
@@ -309,7 +304,7 @@ Signal Signal::asinh() const {
 }
 
 Signal Signal::atanh() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::atanh((*this)[i]);
     }
@@ -319,7 +314,7 @@ Signal Signal::atanh() const {
 /* ------------------------------- */
 
 Signal Signal::square() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] * (*this)[i];
     }
@@ -327,7 +322,7 @@ Signal Signal::square() const {
 }
 
 Signal Signal::pow(double exponent) const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::pow((*this)[i], exponent);
     }
@@ -335,7 +330,7 @@ Signal Signal::pow(double exponent) const {
 }
 
 Signal Signal::sqrt() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::sqrt((*this)[i]);
     }
@@ -343,7 +338,7 @@ Signal Signal::sqrt() const {
 }
 
 Signal Signal::log() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::log((*this)[i]);
     }
@@ -351,7 +346,7 @@ Signal Signal::log() const {
 }
 
 Signal Signal::log2() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::log2((*this)[i]);
     }
@@ -359,7 +354,7 @@ Signal Signal::log2() const {
 }
 
 Signal Signal::log10() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::log10((*this)[i]);
     }
@@ -367,7 +362,7 @@ Signal Signal::log10() const {
 }
 
 Signal Signal::exp() const {
-    Signal output(size(), getSamplingFrequency());
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::exp((*this)[i]);
     }
@@ -456,12 +451,6 @@ bool Signal::operator != (const Signal &input) const {
 /* ------------------------------- */
 
 void Signal::generateWaveform(WaveformType type, double amplitude, double frequency, double phase, double offset, double delay, double duty_cycle) {
-    // Vérification de la fréquence d'échantillonnage pour éviter la division par zéro
-    if (mSamplingFrequency <= 0) {
-        std::cerr << "Error: Sampling frequency is not positive." << std::endl;
-        return;
-    }
-
     // Vérification du duty cycle pour les formes d'onde concernées
     if (duty_cycle < 0.0 || duty_cycle > 100.0) {
         std::cerr << "Error: Duty cycle must be between 0 and 100." << std::endl;
@@ -470,9 +459,9 @@ void Signal::generateWaveform(WaveformType type, double amplitude, double freque
     duty_cycle /= 100;
 
     // Calcul de la période d'échantillonnage
-    double sample_period = 1.0 / mSamplingFrequency;
+    double sample_period = 1.0 / SAMPLING_FREQUENCY;
     // Conversion du délai en nombre d'échantillons
-    double delay_samples = delay / 1000.0 * mSamplingFrequency;
+    double delay_samples = delay / 1000.0 * SAMPLING_FREQUENCY;
 
     // Variables pour le temps et la valeur du signal
     double t, value;
@@ -591,7 +580,7 @@ Spectrum Signal::DFT(size_t size_zero_padding) const {
         spectrum[i] = (spectrum[i] * 2.0) / static_cast<double>(N);
     }
 
-    return Spectrum(spectrum, mSamplingFrequency); // Return a Spectrum object
+    return Spectrum(spectrum); // Return a Spectrum object
 }
 
 /* ------------------------------- */

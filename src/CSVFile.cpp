@@ -2,7 +2,7 @@
 
 CSVFile::CSVFile(const std::string &filename) : mFilename(filename) {}
 
-std::vector<Signal> CSVFile::readSignals(double samplingFrequency) {
+std::vector<Signal> CSVFile::readSignals() {
     mFileStream.open(mFilename, std::ios::in);
     if (!mFileStream.is_open()) {
         throw std::ios_base::failure("Failed to open file");
@@ -20,7 +20,7 @@ std::vector<Signal> CSVFile::readSignals(double samplingFrequency) {
         while (std::getline(ss, token, ',')) {
             values.push_back(std::atol(token.c_str()));
         }
-        signals.emplace_back(values, samplingFrequency, name); // samplingFrequency is set to 0 for this example
+        signals.emplace_back(values, name);
     }
     mFileStream.close();
 
@@ -59,7 +59,7 @@ void CSVFile::writeSignals(const std::vector<Signal> &signals, bool axis) {
     double axis_value;
     for (size_t i = 0; i < maxSize; ++i) {
         if (axis) { // time
-            axis_value = i / signals[0].getSamplingFrequency(); 
+            axis_value = i / SAMPLING_FREQUENCY; 
             mFileStream << axis_value;
             if (nbSignals != 0) mFileStream << ",";
         }
@@ -125,7 +125,7 @@ void CSVFile::appendSignals(const std::vector<Signal> &signals) {
 }
 
 
-std::vector<Spectrum> CSVFile::readSpectrums(double samplingFrequency) {
+std::vector<Spectrum> CSVFile::readSpectrums() {
     mFileStream.open(mFilename, std::ios::in);
     if (!mFileStream.is_open()) {
         throw std::ios_base::failure("Failed to open file");
@@ -143,7 +143,7 @@ std::vector<Spectrum> CSVFile::readSpectrums(double samplingFrequency) {
         while (std::getline(ss, token, ',')) {
             values.push_back(parseComplex(token.c_str()));
         }
-        spectrums.emplace_back(values, samplingFrequency, name); // samplingFrequency is set to 0 for this example
+        spectrums.emplace_back(values, name); // samplingFrequency is set to 0 for this example
     }
     mFileStream.close();
 
@@ -182,7 +182,7 @@ void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis) 
     double axis_value;
     for (size_t i = 0; i < maxSize; ++i) {
         if (axis) { // frequency
-            axis_value = i * spectrums[0].getSamplingFrequency() / maxSize;
+            axis_value = i * SAMPLING_FREQUENCY / maxSize;
             mFileStream << axis_value;
             if (nbSpectrums != 0) mFileStream << ",";
         }
@@ -287,7 +287,7 @@ void CSVFile::appendSpectrums(const std::vector<Spectrum> &spectrums) {
 
     // Add any remaining data from the new spectrums that exceed existing lines
     for (size_t i = maxLines; i < spectrumMaxSize; ++i) {
-        double freq = i * spectrums[0].getSamplingFrequency() / spectrumMaxSize;
+        double freq = i * SAMPLING_FREQUENCY / spectrumMaxSize;
         mFileStream << freq;
 
         for (const auto &spectrum : spectrums) {

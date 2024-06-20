@@ -159,7 +159,7 @@ int test_demodulate(int argc, char *argv[]) try {
     IIRFilter iir_filter;
 
     /* Filtre pass bas */
-    iir_filter.set(4, 20e3, 0, SAMPLING_FREQUENCY, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
+    iir_filter.set(4, 20e3, 0, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
     iir_filter.setup();
     std::cout << "Filtre passe bas :\n";
     iir_filter.printCoefficients();
@@ -174,7 +174,7 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cout << "Demodulation :\n";
 
     double oscillator_frequency = s1_frequency;
-    Demodulator dem(dem_filter_freq, oscillator_frequency, SAMPLING_FREQUENCY);
+    Demodulator dem(dem_filter_freq, oscillator_frequency);
     dem.setup();
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
@@ -231,26 +231,90 @@ int test_demodulate(int argc, char *argv[]) try {
     return 1;
 }
 
+
+
 int test_PID(int argc, char *argv[]) {
     SetDecimation(16);
     SetBufferSize(1 << 14);
 
 
-    std::cout << "Test PID" << std::endl;
+    std::string data_filename = "./data/test";
+    double ki = 0, kd = 0, kp = 0, out_max = 10, out_min = -10;
+    
+    if (argc > 1) {
+        // Parcourir chaque argument à partir du deuxième (le premier étant le nom du programme)
+        for (int i = 1; i < argc; i++) {
+            std::string param = argv[i];
+
+            // Vérifier si l'argument est "help"
+            if (param == "help") {
+                std::cerr << "\033[4;0mHelp message\033[0m" << std::endl;
+                std::cerr << "Details:" << std::endl;
+                std::cerr << "  Test PID" << std::endl;
+                std::cerr << "Usage: " << argv[0] << std::endl;
+                std::cerr << "  kp=<valeur> This is the proportional gain" << std::endl;
+                std::cerr << "  ki=<valeur> This is the integral gain" << std::endl;
+                std::cerr << "  kd=<valeur> This is the derivative gain" << std::endl;
+                std::cerr << "  min=<valeur>" << std::endl;
+                std::cerr << "  max=<valeur>" << std::endl;
+                return 0;
+            } else {
+                /// Parse other arguments
+                size_t pos = param.find('=');
+                if (pos != std::string::npos) {
+                    std::string name = param.substr(0, pos);
+                    std::string value = param.substr(pos + 1);
+                    
+                    // Compare the parameter name to retrieve the value
+                    if (name == "kp") {
+                        kp = std::stod(value);
+                    } else if (name == "ki") {
+                        ki = std::stod(value);
+                    } else if (name == "kd") {
+                        kd = std::stod(value);
+                    } else if (name == "min") {
+                        out_min = std::stod(value);
+                    } else if (name == "max") {
+                        out_max = std::stod(value);
+                    } else {
+                        std::cerr << "Invalid argument format: " << param << std::endl;
+                        return 1;
+                    }
+                } else {
+                    std::cerr << "Invalid argument format: " << param << std::endl;
+                    return 1;
+                }
+            }
+        }
+    }
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - */
+
     std::cout << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
+    std::cout << "Test PID" << std::endl;
+    std::cout << "kp=" << kp << std::endl;
+    std::cout << "ki=" << ki << std::endl;
+    std::cout << "kd=" << kd << std::endl;
+    std::cout << "min=" << out_min << std::endl;
+    std::cout << "max=" << out_max << std::endl;
+    std::cout << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
+
+    SetDecimation(16);
+    SetBufferSize(1 << 14);
 
     Signal signal_input("input(t)");
     Signal signal_desired("desired(t)");
     Signal signal_output("output(t)");
 
-    signal_input.generateWaveform(WaveformType::POSITIVE_DC, 0.1);
-    signal_desired.generateWaveform(WaveformType::POSITIVE_DC, 0.5);
+    signal_input.generateWaveform(WaveformType::POSITIVE_DC, 0);
+    signal_desired.generateWaveform(WaveformType::POSITIVE_DC, 1.0);
 
     PID pid;
-    pid.set(0.25, 1, 0, 100, -1, 1);
+    pid.set(kp, ki, kd, out_min, out_max); // Initialisation du PID avec des valeurs de gains et d'adaptation
 
-    for (size_t i = 0; i < signal_input.size(); i++) {
-        signal_output[i] = pid.process(signal_desired[i], signal_input[i]);
+    for (size_t j = 0; j < signal_input.size(); j++) {
+        signal_output[j] = signal_input[j];
+        signal_output[j] = pid.process(signal_desired[j], signal_output[j]);
     }
 
     CSVFile outFile("./data/test_PID.csv");

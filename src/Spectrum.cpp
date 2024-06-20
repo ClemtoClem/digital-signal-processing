@@ -1,18 +1,17 @@
 #include "Spectrum.hpp"
 #include "Signal.hpp"
 
-Spectrum::Spectrum(const std::string &name) : std::vector<complexd>(BUFFER_SIZE, 0.0), mSamplingFrequency(SAMPLING_FREQUENCY), mName(name) {}
+Spectrum::Spectrum(const std::string &name) : std::vector<complexd>(BUFFER_SIZE, 0.0), mName(name) {}
 
-Spectrum::Spectrum(size_t size, double fs, const std::string &name) : std::vector<complexd>(size), mSamplingFrequency(std::abs(fs)), mName(name) {}
+Spectrum::Spectrum(size_t size, const std::string &name) : std::vector<complexd>(size), mName(name) {}
 
-Spectrum::Spectrum(const std::vector<complexd> &values, double fs, const std::string &name) : std::vector<complexd>(values), mSamplingFrequency(std::abs(fs)), mName(name) {}
+Spectrum::Spectrum(const std::vector<complexd> &values, const std::string &name) : std::vector<complexd>(values), mName(name) {}
 
-Spectrum::Spectrum(const Spectrum &other) : std::vector<complexd>(other), mSamplingFrequency(other.mSamplingFrequency), mName(other.mName) {}
+Spectrum::Spectrum(const Spectrum &other) : std::vector<complexd>(other),mName(other.mName) {}
 
 Spectrum &Spectrum::operator=(const Spectrum &other) {
     if (this != &other) {
         std::vector<complexd>::operator=(other);
-        mSamplingFrequency = mSamplingFrequency;
     }
     return *this;
 }
@@ -25,10 +24,6 @@ const std::string &Spectrum::getName() const {
 
 void Spectrum::setName(const std::string &name) {
     mName = name;
-}
-
-double Spectrum::getSamplingFrequency() const {
-    return mSamplingFrequency;
 }
 
 bool Spectrum::hasInfitityValue() const {
@@ -58,7 +53,7 @@ Spectrum &Spectrum::fill(complexd value)
 /* ------------------------------- */
 
 Spectrum Spectrum::operator+(const Spectrum &other) const {
-    Spectrum output(other.size(), mSamplingFrequency);
+    Spectrum output(other.size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] + other[i];
     }
@@ -66,7 +61,7 @@ Spectrum Spectrum::operator+(const Spectrum &other) const {
 }
 
 Spectrum Spectrum::operator-(const Spectrum &other) const {
-    Spectrum output(other.size(), mSamplingFrequency);
+    Spectrum output(other.size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] - other[i];
     }
@@ -74,7 +69,7 @@ Spectrum Spectrum::operator-(const Spectrum &other) const {
 }
 
 Spectrum Spectrum::operator*(const Spectrum &other) const {
-    Spectrum output(other.size(), mSamplingFrequency);
+    Spectrum output(other.size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] * other[i];
     }
@@ -82,7 +77,7 @@ Spectrum Spectrum::operator*(const Spectrum &other) const {
 }
 
 Spectrum Spectrum::operator/(const Spectrum &other) const {
-    Spectrum output(other.size(), mSamplingFrequency);
+    Spectrum output(other.size());
     for (size_t i = 0; i < size(); i++) {
         if (std::abs(other[i]) == 0) output[i] = {INFINITY, INFINITY};
         else output[i] = (*this)[i] / other[i];
@@ -122,7 +117,7 @@ Spectrum &Spectrum::operator/=(const Spectrum &other) {
 /* ------------------------------- */
 
 Spectrum Spectrum::operator+(complexd value) const {
-    Spectrum output(size(), mSamplingFrequency);
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] + value;
     }
@@ -130,7 +125,7 @@ Spectrum Spectrum::operator+(complexd value) const {
 }
 
 Spectrum Spectrum::operator-(complexd value) const {
-    Spectrum output(size(), mSamplingFrequency);
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] - value;
     }
@@ -138,7 +133,7 @@ Spectrum Spectrum::operator-(complexd value) const {
 }
 
 Spectrum Spectrum::operator*(complexd value) const {
-    Spectrum output(size(), mSamplingFrequency);
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] * value;
     }
@@ -146,7 +141,7 @@ Spectrum Spectrum::operator*(complexd value) const {
 }
 
 Spectrum Spectrum::operator/(complexd value) const {
-    Spectrum output(size(), mSamplingFrequency);
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         if (std::abs(value) == 0) output[i] = {INFINITY, INFINITY};
         else output[i] = (*this)[i] / value;
@@ -186,7 +181,7 @@ Spectrum &Spectrum::operator/=(complexd value) {
 /* ------------------------------- */
 
 Spectrum operator+(complexd value, const Spectrum &input) {
-    Spectrum output(input.size(), input.getSamplingFrequency());
+    Spectrum output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = input[i] + value;
     }
@@ -194,7 +189,7 @@ Spectrum operator+(complexd value, const Spectrum &input) {
 }
 
 Spectrum operator-(complexd value, const Spectrum &input) {
-    Spectrum output(input.size(), input.getSamplingFrequency());
+    Spectrum output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = input[i] - value;
     }
@@ -202,7 +197,7 @@ Spectrum operator-(complexd value, const Spectrum &input) {
 }
 
 Spectrum operator*(complexd value, const Spectrum &input) {
-    Spectrum output(input.size(), input.getSamplingFrequency());
+    Spectrum output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = input[i] * value;
     }
@@ -210,7 +205,7 @@ Spectrum operator*(complexd value, const Spectrum &input) {
 }
 
 Spectrum operator/(complexd value, const Spectrum &input) {
-    Spectrum output(input.size(), input.getSamplingFrequency());
+    Spectrum output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         if (std::abs(value) == 0) output[i] = {INFINITY, INFINITY};
         else output[i] = input[i] / value;
@@ -221,7 +216,7 @@ Spectrum operator/(complexd value, const Spectrum &input) {
 /* ------------------------------- */
 
 Spectrum Spectrum::cos() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::cos((*this)[i]);
     }
@@ -229,7 +224,7 @@ Spectrum Spectrum::cos() const {
 }
 
 Spectrum Spectrum::sin() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::sin((*this)[i]);
     }
@@ -237,7 +232,7 @@ Spectrum Spectrum::sin() const {
 }
 
 Spectrum Spectrum::tan() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::tan((*this)[i]);
     }
@@ -245,7 +240,7 @@ Spectrum Spectrum::tan() const {
 }
 
 Spectrum Spectrum::cosh() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::cosh((*this)[i]);
     }
@@ -253,7 +248,7 @@ Spectrum Spectrum::cosh() const {
 }
 
 Spectrum Spectrum::sinh() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::sinh((*this)[i]);
     }
@@ -261,7 +256,7 @@ Spectrum Spectrum::sinh() const {
 }
 
 Spectrum Spectrum::tanh() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::tanh((*this)[i]);
     }
@@ -269,7 +264,7 @@ Spectrum Spectrum::tanh() const {
 }
 
 Spectrum Spectrum::acos() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::acos((*this)[i]);
     }
@@ -277,7 +272,7 @@ Spectrum Spectrum::acos() const {
 }
 
 Spectrum Spectrum::asin() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::asin((*this)[i]);
     }
@@ -285,7 +280,7 @@ Spectrum Spectrum::asin() const {
 }
 
 Spectrum Spectrum::atan() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::atan((*this)[i]);
     }
@@ -293,7 +288,7 @@ Spectrum Spectrum::atan() const {
 }
 
 Spectrum Spectrum::acosh() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::acosh((*this)[i]);
     }
@@ -301,7 +296,7 @@ Spectrum Spectrum::acosh() const {
 }
 
 Spectrum Spectrum::asinh() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::asinh((*this)[i]);
     }
@@ -309,7 +304,7 @@ Spectrum Spectrum::asinh() const {
 }
 
 Spectrum Spectrum::atanh() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::atanh((*this)[i]);
     }
@@ -319,7 +314,7 @@ Spectrum Spectrum::atanh() const {
 /* ------------------------------- */
 
 Spectrum Spectrum::square() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = (*this)[i] * (*this)[i];
     }
@@ -327,7 +322,7 @@ Spectrum Spectrum::square() const {
 }
 
 Spectrum Spectrum::pow(complexd exponent) const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::pow((*this)[i], exponent);
     }
@@ -335,7 +330,7 @@ Spectrum Spectrum::pow(complexd exponent) const {
 }
 
 Spectrum Spectrum::sqrt() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::sqrt((*this)[i]);
     }
@@ -343,7 +338,7 @@ Spectrum Spectrum::sqrt() const {
 }
 
 Spectrum Spectrum::log() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::log((*this)[i]);
     }
@@ -351,7 +346,7 @@ Spectrum Spectrum::log() const {
 }
 
 Spectrum Spectrum::log10() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::log10((*this)[i]);
     }
@@ -359,7 +354,7 @@ Spectrum Spectrum::log10() const {
 }
 
 Spectrum Spectrum::exp() const {
-    Spectrum output(size(), getSamplingFrequency());
+    Spectrum output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::exp((*this)[i]);
     }
@@ -369,7 +364,7 @@ Spectrum Spectrum::exp() const {
 /* ------------------------------- */
 
 Signal Spectrum::abs() const {
-    Signal output(size(), mSamplingFrequency);
+    Signal output(size());
     for (size_t i = 0; i < size(); i++) {
         output[i] = std::abs((*this)[i]);
     }
@@ -459,7 +454,7 @@ bool Spectrum::operator != (const Spectrum &input) const {
 Signal Spectrum::IDFT(size_t size_zero_padding) const {
     size_t N = this->size();
     size_t P = N + size_zero_padding;
-    Spectrum reconstructedSignal(P, mSamplingFrequency);
+    Spectrum reconstructedSignal(P);
 
     // Bit-reversal permutation
     size_t n = P;
@@ -506,7 +501,7 @@ Signal Spectrum::IDFT(size_t size_zero_padding) const {
     }
 
     // Ensure the signal is real by taking the real part of the complex values
-    Signal realSignal(P, mSamplingFrequency); // Assuming sampling frequency is handled elsewhere
+    Signal realSignal(P); // Assuming sampling frequency is handled elsewhere
     for (size_t i = 0; i < P; i++) {
         realSignal[i] = reconstructedSignal[i].real();
     }
