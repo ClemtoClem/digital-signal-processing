@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) try {
     IIRFilter iir_filter;
 
     /* Filtre pass bas */
-    iir_filter.set(4, 20e3, 0, SAMPLING_FREQUENCY, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
+    iir_filter.set(4, 20e3, 0, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
     iir_filter.setup();
     std::cout << "Filtre passe bas :\n";
     iir_filter.printCoefficients();
@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) try {
     std::cout << "Demodulation :\n";
 
     double oscillator_frequency = s1_frequency;
-    Demodulator dem(dem_filter_freq, oscillator_frequency, SAMPLING_FREQUENCY);
+    Demodulator dem(dem_filter_freq, oscillator_frequency);
     dem.setup();
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
