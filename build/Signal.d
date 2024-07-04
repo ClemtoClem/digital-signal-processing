@@ -149,9 +149,9 @@ build/Signal.o: src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp \
  /usr/include/c++/11/bits/stl_uninitialized.h \
  /usr/include/c++/11/bits/stl_vector.h \
  /usr/include/c++/11/bits/stl_bvector.h \
- /usr/include/c++/11/bits/vector.tcc /usr/include/c++/11/limits \
- /usr/include/c++/11/cmath /usr/include/math.h \
- /usr/include/x86_64-linux-gnu/bits/math-vector.h \
+ /usr/include/c++/11/bits/vector.tcc src/globals.hpp \
+ /usr/include/c++/11/complex /usr/include/c++/11/cmath \
+ /usr/include/math.h /usr/include/x86_64-linux-gnu/bits/math-vector.h \
  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
  /usr/include/x86_64-linux-gnu/bits/fp-logb.h \
@@ -160,7 +160,8 @@ build/Signal.o: src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
  /usr/include/x86_64-linux-gnu/bits/iscanonical.h \
- /usr/include/c++/11/bits/specfun.h /usr/include/c++/11/tr1/gamma.tcc \
+ /usr/include/c++/11/bits/specfun.h /usr/include/c++/11/limits \
+ /usr/include/c++/11/tr1/gamma.tcc \
  /usr/include/c++/11/tr1/special_function_util.h \
  /usr/include/c++/11/tr1/bessel_function.tcc \
  /usr/include/c++/11/tr1/beta_function.tcc \
@@ -171,8 +172,7 @@ build/Signal.o: src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp \
  /usr/include/c++/11/tr1/modified_bessel_func.tcc \
  /usr/include/c++/11/tr1/poly_hermite.tcc \
  /usr/include/c++/11/tr1/poly_laguerre.tcc \
- /usr/include/c++/11/tr1/riemann_zeta.tcc src/globals.hpp \
- /usr/include/c++/11/complex /usr/include/c++/11/sstream \
+ /usr/include/c++/11/tr1/riemann_zeta.tcc /usr/include/c++/11/sstream \
  /usr/include/c++/11/bits/sstream.tcc src/Spectrum.hpp
 src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp :
  /usr/include/c++/11/iostream :
@@ -325,9 +325,9 @@ src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp :
  /usr/include/c++/11/bits/stl_uninitialized.h :
  /usr/include/c++/11/bits/stl_vector.h :
  /usr/include/c++/11/bits/stl_bvector.h :
- /usr/include/c++/11/bits/vector.tcc /usr/include/c++/11/limits :
- /usr/include/c++/11/cmath /usr/include/math.h :
- /usr/include/x86_64-linux-gnu/bits/math-vector.h :
+ /usr/include/c++/11/bits/vector.tcc src/globals.hpp :
+ /usr/include/c++/11/complex /usr/include/c++/11/cmath :
+ /usr/include/math.h /usr/include/x86_64-linux-gnu/bits/math-vector.h :
  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h :
  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h :
  /usr/include/x86_64-linux-gnu/bits/fp-logb.h :
@@ -336,7 +336,8 @@ src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp :
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h :
  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h :
  /usr/include/x86_64-linux-gnu/bits/iscanonical.h :
- /usr/include/c++/11/bits/specfun.h /usr/include/c++/11/tr1/gamma.tcc :
+ /usr/include/c++/11/bits/specfun.h /usr/include/c++/11/limits :
+ /usr/include/c++/11/tr1/gamma.tcc :
  /usr/include/c++/11/tr1/special_function_util.h :
  /usr/include/c++/11/tr1/bessel_function.tcc :
  /usr/include/c++/11/tr1/beta_function.tcc :
@@ -347,6 +348,5 @@ src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp :
  /usr/include/c++/11/tr1/modified_bessel_func.tcc :
  /usr/include/c++/11/tr1/poly_hermite.tcc :
  /usr/include/c++/11/tr1/poly_laguerre.tcc :
- /usr/include/c++/11/tr1/riemann_zeta.tcc src/globals.hpp :
- /usr/include/c++/11/complex /usr/include/c++/11/sstream :
+ /usr/include/c++/11/tr1/riemann_zeta.tcc /usr/include/c++/11/sstream :
  /usr/include/c++/11/bits/sstream.tcc src/Spectrum.hpp :

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <time.h>
 #include "globals.hpp"
 #include "Signal.hpp"
 #include "Spectrum.hpp"
@@ -86,6 +87,9 @@ int test_demodulate(int argc, char *argv[]) try {
                         SetBufferSize(std::stoull(value));
                     } else if (name == "filename" || name == "f") {
                         data_filename = value;
+                    } else {
+                        std::cerr << "Invalid argument name: " << name << std::endl;
+                        return 1;
                     }
                 } else {
                     std::cerr << "Invalid argument format: " << param << std::endl;
@@ -130,7 +134,6 @@ int test_demodulate(int argc, char *argv[]) try {
     //Spectrum spectrum_input   ("INPUT(f)");
     Spectrum spectrum_demAmpli  ("AMPLITUDE(f)");
     Spectrum spectrum_demPhase  ("PHASE(f)");
-
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* synthétisation de la forme du signal */
@@ -189,9 +192,21 @@ int test_demodulate(int argc, char *argv[]) try {
 
     std::cerr << "Calcul des transformées de fourier discrètes" << std::endl;
 
-    spectrum_output   = signal_output.DFT(BUFFER_SIZE);
-    spectrum_demAmpli = signal_demAmpli.DFT(BUFFER_SIZE);
-    spectrum_demPhase = signal_demPhase.DFT(BUFFER_SIZE);
+    //signal_output.DFT(spectrum_output);
+    Signal signal_demAmpliAfterRisingTime;
+    Signal signal_demPhaseAfterRisingTime;
+    double risingTime = 0.001;
+    size_t index = (double) risingTime * SAMPLING_FREQUENCY;
+    for (size_t i = index; i < signal_demAmpli.size(); i++) {
+        if (signal_demAmpli[i] > 0) {
+            signal_demAmpliAfterRisingTime.push_back(signal_demAmpli[i]);
+            signal_demPhaseAfterRisingTime.push_back(signal_demPhase[i]);
+        }
+    }
+    spectrum_demAmpli.resize(BUFFER_SIZE - index);
+    spectrum_demPhase.resize(BUFFER_SIZE - index);
+    signal_demAmpli.DFT(spectrum_demAmpli);
+    signal_demPhase.DFT(spectrum_demPhase);
 
     std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 
@@ -208,8 +223,8 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cout << data_filename << "_signals.csv" << std::endl;
     CSVFile outFile1(data_filename+"_signals.csv");
     std::vector<Signal> outSig;
-    outSig.emplace_back(signal_output);
-    outSig.emplace_back(signalLP);
+    //outSig.emplace_back(signal_output);
+    //outSig.emplace_back(signalLP);
     outSig.emplace_back(signal_demAmpli);
     outSig.emplace_back(signal_demPhase);
     outFile1.writeSignals(outSig, true); // with time axis
@@ -217,7 +232,7 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cout << data_filename << "_spectrums.csv" << std::endl;
     CSVFile outFile2(data_filename+"_spectrums.csv");
     std::vector<Spectrum> outSp;
-    outSp.emplace_back(spectrum_output);
+    //outSp.emplace_back(spectrum_output);
     outSp.emplace_back(spectrum_demAmpli);
     outSp.emplace_back(spectrum_demPhase);
     outFile2.writeSpectrums(outSp, true); // with frequency axis
@@ -329,7 +344,7 @@ int test_PID(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     int ret = 0;
-    //ret |= test_demodulate(argc, argv);
-    ret |= test_PID(argc, argv);
+    ret |= test_demodulate(argc, argv);
+    //ret |= test_PID(argc, argv);
     return ret;
 }

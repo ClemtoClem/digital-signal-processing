@@ -1,5 +1,5 @@
-#ifndef __CSVFILE_HPP
-#define __CSVFILE_HPP
+#ifndef CSVFILE_HPP
+#define CSVFILE_HPP
 
 #include <fstream>
 #include <vector>
@@ -7,12 +7,13 @@
 #include <sstream>
 #include <string>
 #include <iostream>
-#include <iomanip>
-#include "globals.hpp"
 #include "Signal.hpp"
 #include "Spectrum.hpp"
 
 class CSVFile {
+private:
+    std::string _filename;
+    std::fstream _fileStream;
 public:
     CSVFile(const std::string &filename);
 
@@ -29,7 +30,7 @@ public:
     std::vector<Spectrum> readSpectrums();
 
     // Method to write spectrums to a CSV file
-    void writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis = true);
+    void writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis = true, double freqOffset = 0);
 
     // Method to append spectrums to a CSV file
     void appendSpectrums(const std::vector<Spectrum> &spectrums);
@@ -43,9 +44,6 @@ private:
         os << c.real() << (c.imag() >= 0 ? "+" : "") << c.imag() << "j";
         return os;
     }
-
-    std::string mFilename;
-    std::fstream mFileStream;
 };
 
-#endif // __CSVFILE_HPP
+#endif // CSVFILE_HPP

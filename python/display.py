@@ -33,7 +33,7 @@ def plot_signals(ax: plt.Axes, signals: dict):
     for signal_name, signal_data in signals.items():
         print(signal_name)
         if signal_name.lower() != "time":
-            ax.plot(signals["time"], np.real(signal_data), label=signal_name)  # Afficher l'amplitude absolue
+            ax.plot(signals["time"], np.real(signal_data), label=signal_name, linewidth=2)  # Afficher l'amplitude absolue
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Amplitude')
     ax.set_title('Signals')
@@ -49,7 +49,7 @@ def plot_fft_signals(ax: plt.Axes, fft_signals: dict, min_freq=None, max_freq=No
     for signal_name, signal_data in fft_signals.items():
         if signal_name.lower() != "freq":
             magnitude_spectrum = np.abs(np.imag(signal_data))
-            ax.loglog(fft_signals["freq"], magnitude_spectrum, label=signal_name)
+            ax.loglog(fft_signals["freq"], magnitude_spectrum, label=signal_name, linewidth=2)
 
             if min_freq is not None and max_freq is not None:
                 indices = np.where((fft_signals["freq"] >= min_freq) & (fft_signals["freq"] <= max_freq))

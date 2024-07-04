@@ -4,8 +4,6 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
-#include <limits>
-#include <cmath>
 #include "globals.hpp"
 
 class Spectrum;
@@ -247,13 +245,18 @@ public:
 
     /* ------------------------------- */
 
-    // Fonction pour effectuer la transformée de Fourier discrète rapide(DFT) et générer le spectre
-    Spectrum DFT(size_t size_zero_padding = 0) const;
+    /**
+     * Fonction pour effectuer la transformée de Fourier discrète rapide(DFT) et générer le spectre
+     * @param[out] output_spectrum Spectre de la transformée de Fourier discrète rapide(DFT)
+     */
+    void DFT(Spectrum &output_spectrum, size_t padded_size = 0, size_t sample_offset = 0) const;
 
     /* ------------------------------- */
 
     // Calculer le niveau RMS du bruit
     double calculateNoiseRMS() const;
+
+    double getRisingTime(size_t &low_index, size_t &high_index) const;
 
     /* ------------------------------- */
 

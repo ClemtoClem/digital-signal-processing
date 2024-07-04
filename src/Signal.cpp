@@ -1,6 +1,9 @@
 #include "Signal.hpp"
 #include "Spectrum.hpp"
 
+#include <limits>
+#include <cmath>
+
 Signal::Signal(const std::string &name) : std::vector<double>(BUFFER_SIZE, 0.0), mName(name) {}
 
 Signal::Signal(size_t size, const std::string &name) : std::vector<double>(size), mName(name) {}
@@ -532,67 +535,95 @@ void Signal::generateWaveform(WaveformType type, double amplitude, double freque
 
 /* ------------------------------- */
 
-Spectrum Signal::DFT(size_t size_zero_padding) const {
-    size_t N = size();
-    size_t P = N + size_zero_padding;
-    std::vector<complexd> spectrum(P, 0.0);
+unsigned int reverseBits(unsigned int n, unsigned int bits) {
+    unsigned int reversed = 0;
+    for (unsigned int i = 0; i < bits; ++i) {
+        reversed = (reversed << 1) | (n & 1);
+        n >>= 1;
+    }
+    return reversed;
+}
 
-    // Bit-reversal permutation
-    size_t n = P;
-    size_t bits = 0;
-    while (n >>= 1) ++bits;
-
-    std::vector<size_t> reversed(P);
-    for (size_t i = 0; i < P; i++) {
-        size_t j = 0;
-        for (size_t k = 0; k < bits; ++k) {
-            if (i & (1 << k)) j |= (1 << (bits - 1 - k));
-        }
-        reversed[i] = j;
+void Signal::DFT(Spectrum &output_spectrum, size_t padded_size, size_t sample_offset) const {
+    size_t N = this->size();
+    size_t p = BITS_PER_SAMPLE;
+    if (N != BUFFER_SIZE) {
+        std::cerr << "Erreur de taille" << std::endl;
+        return;
     }
 
-    // Copy input data to spectrum with bit-reversed order and zero-padding
-    size_t i;
-    for (i = 0; i < N; i++) {
-        spectrum[reversed[i]] = (*this)[i];
-    }
-    for (i = N; i < P; i++) {
-        spectrum[reversed[i]] = 0.0; // Zero-padding
+    std::vector<complexd> A(N), B(N);
+
+    // Réorganisation des éléments en fonction de l'inversion des bits
+    unsigned int j;
+    for (size_t k = 0; k < N; ++k) {
+        j = reverseBits(k, p);
+        A[j] = complexd((*this)[k], 0);
     }
 
-    // FFT algorithm
-    for (size_t s = 1; s <= bits; ++s) {
-        size_t m = 1 << s;
-        complexd wm = std::exp(complexd(0, -2.0 * M_PI / m));
-        for (size_t k = 0; k < P; k += m) {
-            complexd w = 1;
-            for (size_t j = 0; j < m / 2; ++j) {
-                complexd t = w * spectrum[k + j + m / 2];
-                complexd u = spectrum[k + j];
-                spectrum[k + j] = u + t;
-                spectrum[k + j + m / 2] = u - t;
-                w *= wm;
+    for (unsigned int q = 1; q <= p; ++q) {
+        int taille = 1 << q;
+        int taille_precedente = 1 << (q - 1);
+        int nombre_tfd = 1 << (p - q);
+
+        complexd phi(0, -2 * M_PI / taille);
+        for (int m = 0; m < nombre_tfd; ++m) {
+            int position = m * taille;
+            for (int i = 0; i < taille_precedente; ++i) {
+                complexd W = std::exp(phi * static_cast<double>(i));
+                B[position + i] = A[position + i] + W * A[position + taille_precedente + i];
+            }
+            for (int i = taille_precedente; i < taille; ++i) {
+                complexd W = std::exp(phi * static_cast<double>(i));
+                B[position + i] = A[position + i - taille_precedente] + W * A[position + i];
             }
         }
+        std::swap(A, B);
     }
 
-    for (i = 0; i < P; i++) {
-        spectrum[i] = (spectrum[i] * 2.0) / static_cast<double>(N);
+    output_spectrum.resize(N);
+    for (size_t k = 0; k < N; ++k) {
+        output_spectrum[k] = A[k];
     }
-
-    return Spectrum(spectrum); // Return a Spectrum object
 }
 
 /* ------------------------------- */
 
 double Signal::calculateNoiseRMS() const {
     double mean = this->mean();
-    double sum_squares = 0.0;
+    double noise, sum_squares = 0.0;
     for (double value : *this) {
-        double noise = value - mean;
+        noise = value - mean;
         sum_squares += noise * noise;
     }
     return std::sqrt(sum_squares / this->size());
+}
+
+double Signal::getRisingTime(size_t &low_index, size_t &high_index) const
+{
+    double min_val = min();
+    double max_val = max();
+    double low_threshold = min_val + 0.1 * (max_val - min_val);
+    double high_threshold = min_val + 0.9 * (max_val - min_val);
+
+    low_index = 0;
+    high_index = 0;
+    for (size_t i = 1; i < size(); i++) {
+        if ((*this)[i] >= high_threshold) {
+            high_index = i;
+            break;
+        }
+    }
+    
+    for (size_t i = 1; i < size(); i++) {
+        if ((*this)[i] >= low_threshold) {
+            low_index = i;
+            break;
+        }
+    }
+
+    double rise_time = (high_index-low_index) / SAMPLING_FREQUENCY;
+    return rise_time;
 }
 
 /* ------------------------------- */

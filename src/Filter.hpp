@@ -27,7 +27,7 @@ enum class AnalogFilter {
 // classe abstraire d'un filtre
 class BaseFilter {
 public:
-    virtual bool set(int order, int fc1, int fc2, FilterGabarit gabarit, AnalogFilter analogFilter, int rp = 0, int rs = 0) = 0;
+    virtual bool set(int order, double fc1, double fc2, FilterGabarit gabarit, AnalogFilter analogFilter, double rp = 0, double rs = 0) = 0;
     virtual void setup() = 0;
     virtual void reset() = 0;
     virtual Signal process(const Signal &input) = 0;
@@ -41,7 +41,7 @@ public:
     ~IIRFilter();
 
     // paramétrage du filtre
-    bool set(int order, int fc1, int fc2, FilterGabarit gabarit, AnalogFilter analogFilter, int rp = 0, int rs = 0);
+    bool set(int order, double fc1, double fc2, FilterGabarit gabarit, AnalogFilter analogFilter, double rp = 0, double rs = 0);
     
 
     void reset();
@@ -72,9 +72,9 @@ private:
     bool mIsSetup;
 
     int mOrder;
-    int mFc1, mFc2;
-    int mRp; // passband ripple
-    int mRs; // stopband attenuation
+    double mFc1, mFc2;
+    double mRp; // passband ripple
+    double mRs; // stopband attenuation
     FilterGabarit mGabarit;
     AnalogFilter mAnalogFilter;
 

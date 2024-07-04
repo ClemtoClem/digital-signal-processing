@@ -10,7 +10,7 @@ IIRFilter::~IIRFilter() {
     // Destructor logic if needed (automatic cleanup of vectors)
 }
 
-bool IIRFilter::set(int order, int fc1, int fc2, FilterGabarit gabarit, AnalogFilter analogFilter, int rp, int rs)
+bool IIRFilter::set(int order, double fc1, double fc2, FilterGabarit gabarit, AnalogFilter analogFilter, double rp, double rs)
 {
     if (order < 1) {
         std::cerr << "Warning: L'ordre du filtre doit être supérieur ou égal à 1.\n";
