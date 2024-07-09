@@ -21,11 +21,14 @@ The Python version used is 3.10.12.
 ## Example
 
 ```cpp
-#include <iomanip>
+#include <iostream>
+#include "globals.hpp"
 #include "Signal.hpp"
 #include "Spectrum.hpp"
-#include "Noise.hpp"
 #include "CSVFile.hpp"
+#include "Filter.hpp"
+#include "Noise.hpp"
+#include "Demodulator.hpp"
 
 int main() try {
     SetMaxSampleFrequency(125e6);
@@ -58,7 +61,7 @@ int main() try {
 
     WhiteNoise noise;
     noise.setGain(0.01);
-    sout = noise.process(sout);
+    sout = noise.apply(sout);
 
     sp1 = s1.DFT();
     sp2 = s2.DFT();
@@ -261,9 +264,6 @@ int main(int argc, char *argv[]) try {
     std::cerr << std::endl;
 
     std::cerr << "--------------- Calcul des FFT ---------------" << std::endl;
-    /* Calcul des transformées de fourier discrètes des signaux avec buff_size zero padding */
-
-    std::cerr << "Calcul des transformées de fourier discrètes" << std::endl;
 
     size_t low_index, high_index;
     double T_per_period = 1.0 / s1_frequency;

@@ -172,10 +172,7 @@ int test_demodulate(int argc, char *argv[]) try {
     std::cerr << std::endl;
 
     std::cerr << "--------------- Calcul des FFT ---------------" << std::endl;
-    /* Calcul des transformées de fourier discrètes des signaux avec buff_size zero padding */
-
-    std::cerr << "Calcul des transformées de fourier discrètes" << std::endl;
-
+    
     size_t low_index, high_index;
     double T_per_period = 1.0 / s1_frequency;
 	float rising_time = signal_demAmpli.getRisingTime(low_index, high_index);
