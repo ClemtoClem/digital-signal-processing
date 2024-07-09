@@ -10,7 +10,7 @@ HEDEARS   := $(wildcard $(HEADERDIR)/*.h $(HEADERDIR)/*.hpp)
 OBJECTS   := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(addsuffix .o,$(basename $(SOURCES))))
 DEPS      := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(addsuffix .d,$(basename $(SOURCES))))
 CFLAGS    := -Wall -g
-LIB       := -lm
+LIB       := -lm -lfftw3 -lfftw3_threads
 
 GREEN=`tput setaf 2`
 RESET=`tput sgr0`

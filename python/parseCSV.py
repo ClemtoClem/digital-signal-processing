@@ -84,7 +84,7 @@ def plot_data(ax: plt.Axes, signals, typePlot, axis_form="linear", axis_name="",
         if name != axis_name:
             if len(axis) == len(signal) and (name not in ignore_signals):
                 if axis_name == "freq":
-                    signal = np.abs(signal) * (np.sqrt(2.0)/len(signal))
+                    signal = np.abs(signal) / len(signal)
                 if axis_form == "linear":
                     ax.plot(axis * unit_multiplicator, signal, label=name)
                 elif axis_form == "semilogx":

@@ -129,7 +129,7 @@ fig, ax = plt.subplots()
 gs = fig.add_gridspec(2, hspace=0.3)
 
 # Ajout du bouton pour basculer entre les affichages des signaux et des FFT
-toggle_button_ax = plt.axes([0.895, 0.96, 0.1, 0.035])
+toggle_button_ax = plt.axes([0.795, 0.96, 0.2, 0.035])
 toggle_button = Button(toggle_button_ax, 'Voir FFT')
 toggle_button.on_clicked(toggle_plot)
 

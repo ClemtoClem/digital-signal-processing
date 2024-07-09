@@ -188,11 +188,11 @@ void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis, 
         throw std::ios_base::failure("Failed to open file");
     }
 
-    size_t nbSpectrums = spectrums.size();
+    const size_t nbSpectrums = spectrums.size();
+    const size_t N = spectrums[0].size();
 
-    size_t N = spectrums[0].size();
     for (const auto &spectrum : spectrums) {
-        if (spectrum.size()!= N) {
+        if (spectrum.size() != N) {
             throw std::invalid_argument("All spectrums must have the same size");
         }
     }

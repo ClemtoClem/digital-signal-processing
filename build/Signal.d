@@ -173,7 +173,8 @@ build/Signal.o: src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp \
  /usr/include/c++/11/tr1/poly_hermite.tcc \
  /usr/include/c++/11/tr1/poly_laguerre.tcc \
  /usr/include/c++/11/tr1/riemann_zeta.tcc /usr/include/c++/11/sstream \
- /usr/include/c++/11/bits/sstream.tcc src/Spectrum.hpp
+ /usr/include/c++/11/bits/sstream.tcc src/Spectrum.hpp \
+ /usr/include/fftw3.h
 src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp :
  /usr/include/c++/11/iostream :
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h :
@@ -350,3 +351,4 @@ src/Signal.cpp /usr/include/stdc-predef.h src/Signal.hpp :
  /usr/include/c++/11/tr1/poly_laguerre.tcc :
  /usr/include/c++/11/tr1/riemann_zeta.tcc /usr/include/c++/11/sstream :
  /usr/include/c++/11/bits/sstream.tcc src/Spectrum.hpp :
+ /usr/include/fftw3.h :
