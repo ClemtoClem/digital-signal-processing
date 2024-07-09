@@ -451,6 +451,24 @@ bool Spectrum::operator != (const Spectrum &input) const {
     return true;
 }
 
+Signal Spectrum::calculateMagnitude() const {
+    const size_t N = this->size();
+    Signal output(N);
+    for (size_t i = 0; i < N; i++) {
+        output[i] = std::abs((*this)[i])/N;
+    }
+    return output;
+}
+
+Signal Spectrum::calculatePhase() const {
+    const size_t N = this->size();
+    Signal output(N);
+    for (size_t i = 0; i < N; i++) {
+        output[i] = std::arg((*this)[i]);
+    }
+    return output;
+}
+
 /* ------------------------------- */
 
 unsigned int reverseBits(unsigned int n, unsigned int bits) {

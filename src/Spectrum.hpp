@@ -229,6 +229,10 @@ public:
 
     /* ------------------------------- */
 
+    Signal calculateMagnitude() const;
+
+    Signal calculatePhase() const;
+
     /**
      * Fonction pour effectuer la transformée de Fourier inverse rapide (IFFT) et reconstruire le signal
      * @param[out] output_signal : Signal à reconstruire

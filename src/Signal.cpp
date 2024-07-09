@@ -552,11 +552,7 @@ static unsigned int reverseBits(unsigned int n, unsigned int bits) {
     return reversed;
 }
 
-#define VERSION_FFT 3
-
-#if VERSION_FFT == 3
-#include <fftw3.h>
-#endif
+#define VERSION_FFT 1
 
 void Signal::FFT(Spectrum &output_spectrum, size_t sample_offset) const {
     size_t p = BITS_PER_SAMPLE;
@@ -625,25 +621,6 @@ void Signal::FFT(Spectrum &output_spectrum, size_t sample_offset) const {
     for (size_t k = 0; k < N; ++k) {
         output_spectrum[k] = A[k]/2.0;
     }
-#elif VERSION_FFT == 3
-    // Allocation de la mémoire pour FFTW
-    fftw_complex *in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-    fftw_complex *out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-    fftw_plan plan = fftw_plan_dft_r2c_1d(N, const_cast<double*>(this->data()), out, FFTW_ESTIMATE);
-
-    // Exécution de la FFT
-    fftw_execute(plan);
-
-    // Copie des résultats dans le spectre de sortie
-    output_spectrum.resize(N);
-    for (size_t i = 0; i < N; ++i) {
-        output_spectrum[i] = complexd(out[i][0], out[i][1])/2.0;
-    }
-
-    // Libération de la mémoire
-    fftw_destroy_plan(plan);
-    fftw_free(in);
-    fftw_free(out);
 #else
     #error "Unknown version of FFT."
 #endif
