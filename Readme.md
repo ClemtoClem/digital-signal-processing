@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) try {
     std::cerr << "Phase       : " << phase << std::endl;
     std::cerr << "------ Demodulation -----" << std::endl;
     std::cerr << "Freq filter : " << dem_filter_freq << std::endl;
-    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
+    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl << std::endl;
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -210,104 +210,99 @@ int main(int argc, char *argv[]) try {
     Signal s2;
 
     Signal signal_output        ("output(t)");
-    //Signal signal_input       ("input(t)");
     Signal signal_demAmpli      ("amplitude(t)");
     Signal signal_demPhase      ("phase(t)");
     Signal signalLP             ("signalFiltré(t)");
 
     Spectrum spectrum_output    ("OUTPUT(f)");
-    //Spectrum spectrum_input   ("INPUT(f)");
     Spectrum spectrum_demAmpli  ("AMPLITUDE(f)");
-    Spectrum spectrum_demPhase  ("PHASE(f)");
 
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* synthétisation de la forme du signal */
 
-    std::cout << "Generate waveform" << std::endl;
+    std::cerr << "Generate waveform" << std::endl;
     
     s1.generateWaveform(WaveformType::SINUS, s1_amplitude, s1_frequency);
     s2.generateWaveform(WaveformType::SINUS, s2_amplitude, s2_frequency);
     
     signal_output = s1+s2;
+    std::cerr << std::endl;
 
-    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
-
-    /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* Bruiter le signal */
 
     WhiteNoise noise;
     noise.setGain(0.05);
-    signal_output = noise.process(signal_output);
+    signal_output = noise.apply(signal_output);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - */
     /* Test du filtre IIR passe bas de butterworth */
 
-    std::cout << "Filtrage" << std::endl;
+    std::cerr << "Filtrage" << std::endl;
 
     IIRFilter iir_filter;
 
     /* Filtre pass bas */
     iir_filter.set(4, 20e3, 0, FilterGabarit::LOW_PASS, AnalogFilter::BUTTERWORTH);
     iir_filter.setup();
-    std::cout << "Filtre passe bas :\n";
+    std::cerr << "Filtre passe bas :\n";
     iir_filter.printCoefficients();
-    signalLP = iir_filter.process(signal_output);
-    //iir_filter.frequency_response(SIGNAL_SIZE)
+    signalLP = iir_filter.apply(signal_output);
 
-    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
 
-    /* - - - - - - - - - - - - - - - - - - - - - - - */
+    std::cerr << "----------- Démodulation du signal -----------" << std::endl;
+
     /* Initialisation de la démodulation */
-    
-    std::cout << "Demodulation :\n";
-
     double oscillator_frequency = s1_frequency;
     Demodulator dem(dem_filter_freq, oscillator_frequency);
     dem.setup();
 
-    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
-
-    /* - - - - - - - - - - - - - - - - - - - - - - - */
-    /* Démodulation du signal */
-
     dem.demodulate(signal_output, signal_demAmpli, signal_demPhase);
+    std::cerr << std::endl;
 
-    /* - - - - - - - - - - - - - - - - - - - - - - - */
+    std::cerr << "--------------- Calcul des FFT ---------------" << std::endl;
     /* Calcul des transformées de fourier discrètes des signaux avec buff_size zero padding */
 
     std::cerr << "Calcul des transformées de fourier discrètes" << std::endl;
 
-    spectrum_output   = signal_output.DFT(BUFFER_SIZE);
-    spectrum_demAmpli = signal_demAmpli.DFT(BUFFER_SIZE);
-    spectrum_demPhase = signal_demPhase.DFT(BUFFER_SIZE);
+    size_t low_index, high_index;
+    double T_per_period = 1.0 / s1_frequency;
+	float rising_time = signal_demAmpli.getRisingTime(low_index, high_index);
+    high_index = low_index + (rising_time/T_per_period) * 5;
 
-    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
+    signal_output.FFT(spectrum_output);
+    signal_demAmpli.FFT(spectrum_demAmpli, high_index);
 
-    /* - - - - - - - - - - - - - - - - - - - - - - - */
+    std::cerr << "Rising time: " << rising_time << std::endl;
+    std::cerr << std::endl;
+
+
+    std::cerr << "----------------------------------------------" << std::endl;
+    // Calculer et afficher le niveau de bruit RMS
+    double noiseRMS = signal_output.calculateNoiseRMS();
+    std::cerr << "Niveau de bruit RMS: " << noiseRMS << std::endl;
+    std::cerr << std::endl;
+    
+
     /* Sauvgarde des signaux */
+    std::cerr << "------------- Write data to file -------------" << std::endl;
+	std::cerr << "File: ./data/test_temporel.csv" << std::endl;
+	CSVFile outFile1("./data/test_temporel.csv");
+	std::vector<Signal> outSpSig = {signal_output, signal_demAmpli, signal_demPhase};
+	outFile1.writeSignals(outSpSig, true);
 
-    std::cout << "Sauvgarde des signaux" << std::endl;
+	std::cerr << "File: ./data/test_FFT_signal.csv" << std::endl;
+	CSVFile outFile6("./data/test_FFT_signal.csv");
+	std::vector<Spectrum> outSpectrum = {spectrum_output};
+	outFile6.writeSpectrums(outSpectrum, true);
 
-    std::cout << data_filename << ".csv" << std::endl;
-    CSVFile outFile1(data_filename+".csv");
-    std::vector<Signal> outSig;
-    outSig.emplace_back(signal_output);
-    outSig.emplace_back(signalLP);
-    outSig.emplace_back(signal_demAmpli);
-    outSig.emplace_back(signal_demPhase);
-    outFile1.writeSignals(outSig, true); // with time axis
+	std::cerr << "File: ./data/test_FFT_amplitude.csv" << std::endl;
+	CSVFile outFile4("./data/test_FFT_amplitude.csv");
+	std::vector<Spectrum> outSpectrum2 = {spectrum_demAmpli};
+	outFile4.writeSpectrums(outSpectrum2, true);
+	std::cerr << "----------------------------------------------" << std::endl << std::endl;
 
-    std::cout << data_filename << "_DFT.csv" << std::endl;
-    CSVFile outFile2(data_filename+"_DFT.csv");
-    std::vector<Spectrum> outSp;
-    outSp.emplace_back(spectrum_output);
-    outSp.emplace_back(spectrum_demAmpli);
-    outSp.emplace_back(spectrum_demPhase);
-    outFile2.writeSpectrums(outSp, true); // with frequency axis
-
-    std::cerr << "- - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
-    std::cout << "Test success finish" << std::endl;
+    std::cerr << "Test success finish" << std::endl;
 
     return 0;
 } catch (std::exception &e) {
