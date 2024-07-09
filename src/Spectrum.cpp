@@ -1,6 +1,9 @@
 #include "Spectrum.hpp"
 #include "Signal.hpp"
 
+#include <limits>
+#include <cmath>
+
 Spectrum::Spectrum(const std::string &name) : std::vector<complexd>(BUFFER_SIZE, 0.0), mName(name) {}
 
 Spectrum::Spectrum(size_t size, const std::string &name) : std::vector<complexd>(size), mName(name) {}
@@ -371,8 +374,7 @@ Signal Spectrum::abs() const {
     return output;
 }
 
-complexd Spectrum::max() const
-{
+complexd Spectrum::max() const {
     if (this->empty()) {
         return NAN;
     }
@@ -451,62 +453,54 @@ bool Spectrum::operator != (const Spectrum &input) const {
 
 /* ------------------------------- */
 
-Signal Spectrum::IDFT(size_t size_zero_padding) const {
-    size_t N = this->size();
-    size_t P = N + size_zero_padding;
-    Spectrum reconstructedSignal(P);
+unsigned int reverseBits(unsigned int n, unsigned int bits) {
+    unsigned int reversed = 0;
+    for (unsigned int i = 0; i < bits; ++i) {
+        reversed = (reversed << 1) | (n & 1);
+        n >>= 1;
+    }
+    return reversed;
+}
 
-    // Bit-reversal permutation
-    size_t n = P;
-    size_t bits = 0;
-    while (n >>= 1) bits++;
-
-    std::vector<size_t> reversed(P);
-    for (size_t i = 0; i < P; i++) {
-        size_t j = 0;
-        for (size_t k = 0; k < bits; ++k) {
-            if (i & (1 << k)) j |= (1 << (bits - 1 - k));
-        }
-        reversed[i] = j;
+void Spectrum::IFFT(Signal &out_signal) const {
+    size_t p = BITS_PER_SAMPLE;
+    size_t N = 1 << BITS_PER_SAMPLE;
+    while (N > this->size()) {
+        N >>= 1;
+        p--;
     }
 
-    // Copy input data to reconstructedSignal with bit-reversed order
-    size_t i;
-    for (i = 0; i < N; i++) {
-        reconstructedSignal[reversed[i]] = (*this)[i];
-    }
-    for (i = N; i < P; i++) {
-        reconstructedSignal[reversed[i]] = 0.0;
+    std::vector<complexd> A(N), B(N);
+
+    // Inverser la séquence d'entrée
+    for (size_t k = 0; k < N; ++k) {
+        A[k] = std::conj((*this)[k]);
     }
 
-    // IFFT algorithm
-    for (size_t s = 1; s <= bits; s++) {
-        size_t m = 1 << s;
-        complexd wm = std::exp(complexd(0.0, -2.0 * M_PI / m)); // Note the sign change
-        for (size_t k = 0; k < P; k += m) {
-            complexd w = 1;
-            for (size_t j = 0; j < m / 2; j++) {
-                complexd t = w * reconstructedSignal[k + j + m / 2];
-                complexd u = reconstructedSignal[k + j];
-                reconstructedSignal[k + j] = u + t;
-                reconstructedSignal[k + j + m / 2] = u - t;
-                w *= wm;
+    for (unsigned int q = 1; q <= p; ++q) {
+        size_t taille = 1 << q;
+        size_t taille_precedente = 1 << (q - 1);
+
+        complexd phi(0, 2 * M_PI / taille); // Notez le signe positif ici pour l'IFFT
+        complexd W_m(1, 0); // Initial W_m to 1 + 0i
+        complexd W_m_increment = std::exp(phi);
+
+        for (size_t m = 0; m < taille_precedente; ++m) {
+            for (size_t k = m; k < N; k += taille) {
+                complexd t = W_m * A[k + taille_precedente];
+                complexd u = A[k];
+                A[k] = u + t;
+                A[k + taille_precedente] = u - t;
             }
+            W_m *= W_m_increment;
         }
     }
 
-    // Normalize by dividing by P
-    for (size_t i = 0; i < P; i++) {
-        reconstructedSignal[i] /= P;
+    // Inverser la séquence de sortie et normaliser
+    out_signal.resize(N);
+    for (size_t k = 0; k < N; ++k) {
+        out_signal[k] = std::real(std::conj(A[k])) / static_cast<double>(N);
     }
-
-    // Ensure the signal is real by taking the real part of the complex values
-    Signal realSignal(P); // Assuming sampling frequency is handled elsewhere
-    for (size_t i = 0; i < P; i++) {
-        realSignal[i] = reconstructedSignal[i].real();
-    }
-
-    return realSignal;
 }
 
 /* ------------------------------- */

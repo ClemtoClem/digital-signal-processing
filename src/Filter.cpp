@@ -4,7 +4,7 @@
 #include "Signal.hpp"
 #include "globals.hpp"
 
-IIRFilter::IIRFilter() : mIsSetup(false) {}
+IIRFilter::IIRFilter() : _isSetup(false) {}
 
 IIRFilter::~IIRFilter() {
     // Destructor logic if needed (automatic cleanup of vectors)
@@ -25,22 +25,22 @@ bool IIRFilter::set(int order, double fc1, double fc2, FilterGabarit gabarit, An
         return false;
     }
 
-    mOrder = order;
-    mFc1 = fc1;
-    mFc2 = fc2;
-    mGabarit = gabarit;
-    mAnalogFilter = analogFilter;
-    mRp = rp; // passband ripple      (Chebyshev I, Chebyshev II & elliptic filter)
-    mRs = rs; // stopband attenuation (Chebyshev II & elliptic filter)
+    _order = order;
+    _fc1 = fc1;
+    _fc2 = fc2;
+    _gabarit = gabarit;
+    _analogFilter = analogFilter;
+    _rp = rp; // passband ripple      (Chebyshev I, Chebyshev II & elliptic filter)
+    _rs = rs; // stopband attenuation (Chebyshev II & elliptic filter)
 
-    mIsSetup = false;
+    _isSetup = false;
     return true;
 }
 
 void IIRFilter::reset() {
     // Reset memory x[n] and y[n] buffers
-    _xMem.resize(mOrder+1, 0.0);
-    _yMem.resize(mOrder+1, 0.0);
+    _xMem.resize(_order+1, 0.0);
+    _yMem.resize(_order+1, 0.0);
 }
 
 void IIRFilter::printCoefficients() {
@@ -62,9 +62,9 @@ void IIRFilter::printCoefficients() {
 /* Méthode 1 */
 
 void IIRFilter::setup() {
-    if (!mIsSetup) {
+    if (!_isSetup) {
 
-        switch (mAnalogFilter) {
+        switch (_analogFilter) {
             case AnalogFilter::BESSEL:
                 break;
             case AnalogFilter::BUTTERWORTH:
@@ -80,31 +80,52 @@ void IIRFilter::setup() {
                 throw std::invalid_argument("Unknown analog filter type");
         }
 
-        mIsSetup = true;
+        _isSetup = true;
     }
 }
 
-Signal IIRFilter::process(const Signal &input) {
-    if (mIsSetup == false) {
+Signal IIRFilter::apply(const Signal &input) {
+    if (_isSetup == false) {
         throw std::invalid_argument("Filter is not set up");
     }
 
     Signal output(input.size());
     for (size_t i = 0; i < input.size(); i++) {
         output[i] = _b[0] * input[i];
-        for (size_t j = 1; j < 3*static_cast<size_t>(mOrder); j++) {
+        for (size_t j = 1; j < 3*static_cast<size_t>(_order); j++) {
             if (i >= j) {
                 output[i] += (_b[j] * input[i - j]) - (_a[j] * output[i - j]);
             }
         }
     }
     
-    mIsSetup = true;
+    _isSetup = true;
     return output;
 }
 
+double IIRFilter::apply(double x) {
+    if (_isSetup) {
+        _xMem[0] = x;
+        double y = 0.0;
+        for (int i = 0; i <= _order; ++i) {
+            y += _b[i] * _xMem[i];
+            if (i > 0) {
+                y -= _a[i] * _yMem[i];
+            }
+        }
+        for (int i = _order; i > 0; --i) {
+            _xMem[i] = _xMem[i - 1];
+            _yMem[i] = _yMem[i - 1];
+        }
+        _yMem[0] = y;
+        return y;
+    } else {
+        return x;
+    }
+}
+
 Spectrum IIRFilter::frequency_response(size_t num_points) {
-    if (!mIsSetup) {
+    if (!_isSetup) {
         throw std::invalid_argument("Filter is not set up");
     }
 
@@ -130,11 +151,11 @@ Spectrum IIRFilter::frequency_response(size_t num_points) {
 
 void IIRFilter::ButterworthCoefficients()
 {
-    double wc1 = 2 * M_PI * mFc1 / SAMPLING_FREQUENCY;
-    double wc2 = 2 * M_PI * mFc2 / SAMPLING_FREQUENCY;
+    double wc1 = 2 * M_PI * _fc1 / SAMPLING_FREQUENCY;
+    double wc2 = 2 * M_PI * _fc2 / SAMPLING_FREQUENCY;
     double B, W0;
 
-    if (mGabarit == FilterGabarit::BAND_PASS || mGabarit == FilterGabarit::BAND_STOP) {
+    if (_gabarit == FilterGabarit::BAND_PASS || _gabarit == FilterGabarit::BAND_STOP) {
         B = wc2 - wc1;
         W0 = sqrt(wc1 * wc2);
     }
@@ -143,17 +164,17 @@ void IIRFilter::ButterworthCoefficients()
     double a0, a1, a2, b0, b1, b2;
     double a0_num, a1_num, a2_num;
 
-    _a.resize(3 * mOrder);
-    _b.resize(3 * mOrder);
+    _a.resize(3 * _order);
+    _b.resize(3 * _order);
 
     bool stable = true;
 
-    for (int i = 0; i < mOrder; i++) {
-        double theta = M_PI * (2.0 * i + 1.0) / (2.0 * mOrder);
+    for (int i = 0; i < _order; i++) {
+        double theta = M_PI * (2.0 * i + 1.0) / (2.0 * _order);
         double pole_re = -sin(theta);
         double pole_im = cos(theta);
 
-        if (mGabarit == FilterGabarit::LOW_PASS) { // Passe-bas
+        if (_gabarit == FilterGabarit::LOW_PASS) { // Passe-bas
             double k = tan(wc1 / 2.0);
             a0 = 1.0 + sqrt(2.0) * k + k * k;
             a1 = 2.0 * (k * k - 1.0);
@@ -161,7 +182,7 @@ void IIRFilter::ButterworthCoefficients()
             b0 = k * k;
             b1 = 2.0 * b0;
             b2 = b0;
-        } else if (mGabarit == FilterGabarit::HIGH_PASS) { // Passe-haut
+        } else if (_gabarit == FilterGabarit::HIGH_PASS) { // Passe-haut
             double k = tan(wc1 / 2.0);
             a0 = 1.0 + sqrt(2.0) * k + k * k;
             a1 = 2.0 * (k * k - 1.0);
@@ -169,7 +190,7 @@ void IIRFilter::ButterworthCoefficients()
             b0 = 1.0;
             b1 = -2.0;
             b2 = 1.0;
-        } else if (mGabarit == FilterGabarit::BAND_PASS) { // Passe-bande
+        } else if (_gabarit == FilterGabarit::BAND_PASS) { // Passe-bande
             double k1 = 2 * tan(B / 2.0);
             double k2 = W0 * W0;
             a0 = k2 + k1 * pole_re + pole_re * pole_re + pole_im * pole_im;
@@ -178,7 +199,7 @@ void IIRFilter::ButterworthCoefficients()
             b0 = k1;
             b1 = 0.0;
             b2 = -k1;
-        } else if (mGabarit == FilterGabarit::BAND_STOP) { // Coupe-bande
+        } else if (_gabarit == FilterGabarit::BAND_STOP) { // Coupe-bande
             double k1 = 2 * tan(B / 2.0);
             double k2 = W0 * W0;
             a0 = 1.0 + k1 * pole_re + k2;
@@ -190,7 +211,7 @@ void IIRFilter::ButterworthCoefficients()
         }
 
         // Vérifier la stabilité (pour les types de filtre autres que passe-bas et passe-haut)
-        if (mGabarit == FilterGabarit::BAND_PASS || mGabarit == FilterGabarit::BAND_STOP) {
+        if (_gabarit == FilterGabarit::BAND_PASS || _gabarit == FilterGabarit::BAND_STOP) {
             double zero_re = -cos(theta);
             double zero_im = sin(theta);
             double zero_radius = sqrt(zero_re * zero_re + zero_im * zero_im);
@@ -399,73 +420,52 @@ void PolynomialTransfer(const std::vector<std::complex<double>> &zeros, const st
 }
 
 void IIRFilter::setup2() {
-    if (!mIsSetup) {
+    if (!_isSetup) {
         // Reset coefficient buffers
-        _a.resize(mOrder+1, 0.0);
-        _b.resize(mOrder+1, 0.0);
+        _a.resize(_order+1, 0.0);
+        _b.resize(_order+1, 0.0);
         // Reset zeros, poles and gian
         _z.clear();
         _p.clear();
         _k = 0;
 
-        switch (mAnalogFilter) {
+        switch (_analogFilter) {
             case AnalogFilter::BESSEL:
-                //BesselAnalogPrototype(mOrder, _z, _p, _k);
+                //BesselAnalogPrototype(_order, _z, _p, _k);
                 break;
             case AnalogFilter::BUTTERWORTH:
-                ButterworthAnalogPrototype(mOrder, _z, _p, _k);
+                ButterworthAnalogPrototype(_order, _z, _p, _k);
                 break;
             case AnalogFilter::CHEBYSHEV1:
-                //Chebyshev1AnalogPrototype(mOrder, _z, _p, _k);
+                //Chebyshev1AnalogPrototype(_order, _z, _p, _k);
                 break;
             case AnalogFilter::CHEBYSHEV2:
-                //Chebyshev2AnalogPrototype(mOrder, _z, _p, _k);
+                //Chebyshev2AnalogPrototype(_order, _z, _p, _k);
                 break;
             case AnalogFilter::ELLIPTIC:
-                //EllipticAnalogPrototype(mOrder, _z, _p, _k);
+                //EllipticAnalogPrototype(_order, _z, _p, _k);
                 break;
             default:
                 throw std::invalid_argument("Unknown analog filter type");
         }
 
         double fs = 2.0;
-        double warped1 = 2.0 * fs* tan(M_PI * mFc1 / fs);
-        double warped2 = 2.0 * fs* tan(M_PI * mFc2 / fs);
+        double warped1 = 2.0 * fs* tan(M_PI * _fc1 / fs);
+        double warped2 = 2.0 * fs* tan(M_PI * _fc2 / fs);
 
-        if (mGabarit == FilterGabarit::LOW_PASS) {
+        if (_gabarit == FilterGabarit::LOW_PASS) {
             TransformLowpassToLowpass(_z, _p, _k, warped1);
-        } else if (mGabarit == FilterGabarit::HIGH_PASS) {
+        } else if (_gabarit == FilterGabarit::HIGH_PASS) {
             TransformLowpassToHighpass(_z, _p, _k, warped1);
-        } else if (mGabarit == FilterGabarit::LOW_PASS) {
+        } else if (_gabarit == FilterGabarit::LOW_PASS) {
             TransformLowpassToBandpass(_z, _p, _k, warped1, warped2);
-        } else if (mGabarit == FilterGabarit::HIGH_PASS) {
+        } else if (_gabarit == FilterGabarit::HIGH_PASS) {
             TransformLowpassToBandStop(_z, _p, _k, warped1, warped2);
         }
 
         IIRBilinearTransformation(_z, _p, _k, fs);
         PolynomialTransfer(_z, _p, _k, _a, _b);
 
-        mIsSetup = true;
-    }
-}
-
-double IIRFilter::eqdiff(double x) {
-    if (mIsSetup) {
-        _xMem[0] = x;
-        double y = 0.0;
-        for (int i = 0; i <= mOrder; ++i) {
-            y += _b[i] * _xMem[i];
-            if (i > 0) {
-                y -= _a[i] * _yMem[i];
-            }
-        }
-        for (int i = mOrder; i > 0; --i) {
-            _xMem[i] = _xMem[i - 1];
-            _yMem[i] = _yMem[i - 1];
-        }
-        _yMem[0] = y;
-        return y;
-    } else {
-        return x;
+        _isSetup = true;
     }
 }

@@ -10,6 +10,9 @@
 #include "Signal.hpp"
 #include "Spectrum.hpp"
 
+// Method to generate a frequency axis
+std::vector<double> frequency_axis(size_t n, double d = 1.0);
+
 class CSVFile {
 private:
     std::string _filename;
@@ -30,7 +33,7 @@ public:
     std::vector<Spectrum> readSpectrums();
 
     // Method to write spectrums to a CSV file
-    void writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis = true, double freqOffset = 0);
+    void writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis = true, bool withNegativeFrequencies = false);
 
     // Method to append spectrums to a CSV file
     void appendSpectrums(const std::vector<Spectrum> &spectrums);

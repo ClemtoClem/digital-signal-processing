@@ -4,8 +4,6 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
-#include <limits>
-#include <cmath>
 #include "globals.hpp"
 
 class Signal;
@@ -231,11 +229,13 @@ public:
 
     /* ------------------------------- */
 
-    // Fonction pour effectuer la transformée de Fourier inverse rapide (IDFT) et reconstruire le signal
-    Signal IDFT(size_t size_zero_padding = 0) const;
+    /**
+     * Fonction pour effectuer la transformée de Fourier inverse rapide (IFFT) et reconstruire le signal
+     * @param[out] output_signal : Signal à reconstruire
+     */
+    void IFFT(Signal &output_signal) const;
 
     /* ------------------------------- */
-    
 
     friend std::ostream& operator << (std::ostream &out, const Spectrum &spectrum);
 };

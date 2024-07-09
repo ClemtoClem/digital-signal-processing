@@ -316,6 +316,14 @@ Signal Signal::atanh() const {
 
 /* ------------------------------- */
 
+Signal Signal::abs() const {
+    Signal output(size());
+    for (size_t i = 0; i < size(); i++) {
+        output[i] = std::abs((*this)[i]);
+    }
+    return output;
+}
+
 Signal Signal::square() const {
     Signal output(size());
     for (size_t i = 0; i < size(); i++) {
@@ -535,7 +543,7 @@ void Signal::generateWaveform(WaveformType type, double amplitude, double freque
 
 /* ------------------------------- */
 
-unsigned int reverseBits(unsigned int n, unsigned int bits) {
+static unsigned int reverseBits(unsigned int n, unsigned int bits) {
     unsigned int reversed = 0;
     for (unsigned int i = 0; i < bits; ++i) {
         reversed = (reversed << 1) | (n & 1);
@@ -544,23 +552,54 @@ unsigned int reverseBits(unsigned int n, unsigned int bits) {
     return reversed;
 }
 
-void Signal::DFT(Spectrum &output_spectrum, size_t padded_size, size_t sample_offset) const {
-    size_t N = this->size();
-    size_t p = BITS_PER_SAMPLE;
-    if (N != BUFFER_SIZE) {
-        std::cerr << "Erreur de taille" << std::endl;
-        return;
+#define VERSION_FFT 1
+
+#if VERSION_FFT == 3
+static void fft(std::vector<complexd> &x) {
+    size_t N = x.size();
+    if (N <= 1) return;
+
+    // Diviser le vecteur x en sous-vecteurs even et odd
+    std::vector<complexd> even(N / 2);
+    std::vector<complexd> odd(N / 2);
+    for (size_t k = 0; k < N / 2; ++k) {
+        even[k] = x[2 * k];
+        odd[k]  = x[2 * k + 1];
     }
 
-    std::vector<complexd> A(N), B(N);
+    // Appliquer la FFT aux sous-vecteurs
+    fft(even);
+    fft(odd);
+
+    // Recombiner les résultats
+    for (size_t k = 0; k < N / 2; ++k) {
+        complexd t = std::polar(1.0, -2 * M_PI * k / N) * odd[k];
+        x[k]       = even[k] + t;
+        x[k + N / 2] = even[k] - t;
+    }
+}
+#endif
+
+void Signal::FFT(Spectrum &output_spectrum, size_t sample_offset) const {
+    size_t p = BITS_PER_SAMPLE;
+    size_t N = 1 << BITS_PER_SAMPLE;
+    while (N > this->size() - sample_offset) {
+        N >>= 1;
+        p--;
+    }
+
+    std::vector<complexd> A(N);
 
     // Réorganisation des éléments en fonction de l'inversion des bits
     unsigned int j;
     for (size_t k = 0; k < N; ++k) {
         j = reverseBits(k, p);
-        A[j] = complexd((*this)[k], 0);
+        A[j] = complexd((*this)[k + sample_offset], 0);
     }
 
+#if VERSION_FFT == 1
+    // version 1
+    std::vector<complexd> B(N);
     for (unsigned int q = 1; q <= p; ++q) {
         int taille = 1 << q;
         int taille_precedente = 1 << (q - 1);
@@ -580,9 +619,32 @@ void Signal::DFT(Spectrum &output_spectrum, size_t padded_size, size_t sample_of
         }
         std::swap(A, B);
     }
+#elif VERSION_FFT == 2
+    // version 2
+    for (unsigned int q = 1; q <= p; ++q) {
+        size_t taille = 1 << q;
+        size_t taille_precedente = 1 << (q - 1);
 
+        complexd phi(0, -2 * M_PI / taille);
+        complexd W_m(1, 0); // Initial W_m to 1 + 0i
+        complexd W_m_increment = std::exp(phi);
+
+        for (size_t m = 0; m < taille_precedente; ++m) {
+            for (size_t k = m; k < N; k += taille) {
+                complexd t = W_m * A[k + taille_precedente];
+                complexd u = A[k];
+                A[k] = u + t;
+                A[k + taille_precedente] = u - t;
+            }
+            W_m *= W_m_increment;
+        }
+    }
+#elif VERSION_FFT == 3
+    // version 3
+    fft(A);
+#endif
     output_spectrum.resize(N);
-    for (size_t k = 0; k < N; ++k) {
+    for (int k = 0; k < N; ++k) {
         output_spectrum[k] = A[k];
     }
 }

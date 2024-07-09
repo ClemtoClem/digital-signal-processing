@@ -23,6 +23,10 @@ bool PID::set(double kp, double ki, double kd, double outMin, double outMax, dou
     this->outMax = outMax;
     this->outMin = outMin;
 
+    this->alpha = alpha;
+    this->beta = beta;
+    this->gamma = gamma;
+
     // Reset the PID
     reset();
 
@@ -55,7 +59,7 @@ bool PID::setOutputLimits(double outMin, double outMax) {
 	return true;
 }
 
-double PID::process(double desired_value, double input) {
+double PID::apply(double desired_value, double input) {
     if (!is_set) {
         std::cerr << "PID regulator is not set" << std::endl;
         return 0.0;

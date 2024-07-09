@@ -28,10 +28,11 @@ enum class AnalogFilter {
 class BaseFilter {
 public:
     virtual bool set(int order, double fc1, double fc2, FilterGabarit gabarit, AnalogFilter analogFilter, double rp = 0, double rs = 0) = 0;
+    virtual bool isSetup() const = 0;
     virtual void setup() = 0;
     virtual void reset() = 0;
-    virtual Signal process(const Signal &input) = 0;
-    virtual double eqdiff(double x) = 0;
+    virtual Signal apply(const Signal &input) = 0;
+    virtual double apply(double x) = 0;
     virtual void printCoefficients() = 0;
 };
 
@@ -43,6 +44,11 @@ public:
     // paramétrage du filtre
     bool set(int order, double fc1, double fc2, FilterGabarit gabarit, AnalogFilter analogFilter, double rp = 0, double rs = 0);
     
+    /**
+     * @brief Check if the filter is setup
+     * @return True if the filter is setup
+     */
+    bool isSetup() const { return _isSetup; }
 
     void reset();
 
@@ -54,7 +60,10 @@ public:
     // calcul des coefficients
     void setup();
     
-    Signal process(const Signal &input);
+    Signal apply(const Signal &input);
+
+    // calcul de y(n) par application de l‘équation aux différences
+    double apply(double y);
 
     Spectrum frequency_response(size_t num_points);
 
@@ -63,20 +72,17 @@ public:
     // calcul des coefficients
     void setup2();
 
-    // calcul de y(n) par application de l‘équation aux différences
-    double eqdiff(double x);
-
 private:
     void ButterworthCoefficients(); /* < Méthode 1 */
 
-    bool mIsSetup;
+    bool _isSetup;
 
-    int mOrder;
-    double mFc1, mFc2;
-    double mRp; // passband ripple
-    double mRs; // stopband attenuation
-    FilterGabarit mGabarit;
-    AnalogFilter mAnalogFilter;
+    int _order;
+    double _fc1, _fc2;
+    double _rp; // passband ripple
+    double _rs; // stopband attenuation
+    FilterGabarit _gabarit;
+    AnalogFilter _analogFilter;
 
     std::vector<double> _a, _b;
     std::vector<std::complex<double>> _z, _p;

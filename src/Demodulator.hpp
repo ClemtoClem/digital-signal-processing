@@ -11,10 +11,18 @@ class Demodulator {
 public:
 	Demodulator(double freq_filter, double freq_oscillator);
     void setup();
-	void demodulate(Signal &signal, Signal &outputAmplitude, Signal &outputPhase);
+
+	/**
+	 * @brief Demodulate a signal
+	 * @param signal Input signal
+	 * @param outputAmplitude Output signal containing amplitude of the signal
+	 * @param outputPhase Output signal containing phase of the signal
+	 * @param rms If true, output amplitude will be the RMS value of the signal
+	 */
+	void demodulate(Signal &signal, Signal &outputAmplitude, Signal &outputPhase, bool rms = false);
 private:
-	double mFreqFilter, mFreqOscillator;
-    IIRFilter mFilter;
+	double _freqFilter, _freqOscillator;
+    IIRFilter _filter;
 };
 
 #endif // __DEMODULATOR_HPP

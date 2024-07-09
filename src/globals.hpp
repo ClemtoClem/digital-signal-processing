@@ -12,7 +12,7 @@ inline int DECIMATION = 16;
 inline int MAX_SAMPLING_FREQUENCY = 125e6;
 inline double SAMPLING_FREQUENCY = static_cast<double>(MAX_SAMPLING_FREQUENCY) / DECIMATION;
 inline size_t BUFFER_SIZE = 1 << BITS_PER_SAMPLE;
-inline size_t MAX_SIGNAL_SIZE = 1 << BITS_PER_SAMPLE;
+inline const size_t MAX_BUFFER_SIZE = 1 << BITS_PER_SAMPLE;
 
 inline void SetMaxSampleFrequency(int freq) {
     if (MAX_SAMPLING_FREQUENCY <= 0.0) {
@@ -35,7 +35,7 @@ inline void SetDecimation(int decimation) {
 
 inline void SetBufferSize(size_t size) {
     if (size < 1) BUFFER_SIZE = 1;
-    if (size > MAX_SIGNAL_SIZE) BUFFER_SIZE = MAX_SIGNAL_SIZE;
+    if (size > MAX_BUFFER_SIZE) BUFFER_SIZE = MAX_BUFFER_SIZE;
     else BUFFER_SIZE = size;
 }
 

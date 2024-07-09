@@ -1,18 +1,26 @@
 #include "CSVFile.hpp"
 #include "globals.hpp"
 
-int calculateDecimation(double fs, double f, int N_per_period) {
-    // Calcul du nombre d'échantillons par période
-    double T_per_period = 1.0 / f;
-    int N = static_cast<int>(round(T_per_period * fs)); // Nombre total d'échantillons par période
+std::vector<double> frequency_axis(size_t n, double d) {
+    if (n == 0) {
+        throw std::invalid_argument("The number of points must be greater than 0");
+    }
+    if (d <= 0.0) {
+        throw std::invalid_argument("The frequency step must be greater than 0");
+    }
+    std::vector<double> freqs(n);
+    double val = 1.0 / (n * d); // Frequency step
+    size_t N = (n - 1) / 2 + 1;
 
-    // Trouver la décimation la plus grande puissance de 2 inférieure ou égale à 16384 et ne dépassant pas N
-    int decimation = 1;
-    while (decimation < N_per_period && decimation <= 16384) {
-        decimation *= 2;
+    for (size_t i = 0; i < N; ++i) {
+        freqs[i] = i * val;
     }
 
-    return decimation;
+    for (size_t i = N; i < n; ++i) {
+        freqs[i] = (static_cast<double>(i) - static_cast<double>(n)) * val;
+    }
+
+    return freqs;
 }
 
 CSVFile::CSVFile(const std::string &filename) : _filename(filename) {}
@@ -170,7 +178,7 @@ std::vector<Spectrum> CSVFile::readSpectrums() {
     return spectrums;
 }
 
-void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis, double freqOffset) {
+void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis, bool withNegativeFrequencies) {
     if (spectrums.empty()) {
         throw std::invalid_argument("No spectrum provided");
     }
@@ -182,13 +190,15 @@ void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis, 
 
     size_t nbSpectrums = spectrums.size();
 
-    // Find the maximum size of all spectrums
     size_t N = spectrums[0].size();
     for (const auto &spectrum : spectrums) {
-        if (spectrum.size() < N) {
-            N = spectrum.size();
+        if (spectrum.size()!= N) {
+            throw std::invalid_argument("All spectrums must have the same size");
         }
     }
+
+    // Calculate frequency axis
+    std::vector<double> frequencies = frequency_axis(N, 1/SAMPLING_FREQUENCY);
 
     // Write the header
     if (axis) {
@@ -204,11 +214,10 @@ void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis, 
     _fileStream << "\n";
 
     // Write the frequency and spectrums values
-    double axis_value;
-    for (size_t k = 0; k < N; k++) {
+    size_t n = (withNegativeFrequencies) ? N : (N - 1) / 2 + 1;
+    for (size_t k = 0; k < n; k++) {
         if (axis) { // frequency
-            axis_value = ((static_cast<double>(k) * SAMPLING_FREQUENCY) / static_cast<double>(N)) -freqOffset;
-            _fileStream << axis_value << ",";
+            _fileStream << frequencies[k] << ",";
         }
 
         for (size_t s = 0; s < nbSpectrums; s++) {

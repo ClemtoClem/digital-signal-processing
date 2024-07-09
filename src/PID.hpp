@@ -3,7 +3,9 @@
 
 #include <iostream>
 
-// Implement a PID controller
+/**
+ * @brief Implement a PID controller
+ */
 class PID {
 private:
     double kp;
@@ -56,16 +58,47 @@ public:
      */
     bool setOutputLimits(double outMin, double outMax);
 
+    /**
+     * @brief Returns et the proportional gain
+     * @return Proportional gain
+     */
     double getKp() { return kp; }
+
+    /**
+     * @brief Returns et the integral gain
+     * @return Integral gain
+     */
     double getKi() { return ki; }
+
+    /**
+     * @brief Returns et the derivative gain
+     * @return Derivative gain
+     */
     double getKd() { return kd; }
+
+    /**
+     * @brief Returns et the maximum value of the manipulated variable
+     * @return Maximum value of the manipulated variable
+     */
     double getOutMax() { return outMax; }
+
+    /**
+     * @brief Returns et the minimum value of the manipulated variable
+     * @return Minimum value of the manipulated variable
+     */
     double getOutMin() { return outMin; }
 
-    // Returns the manipulated variable given current and current process value
-    double process(double desired_value, double input);
+    /**
+     * @brief Apply the PID controller on the input value and the desired value
+     * @param[in] desired_value Desired value
+     * @param[in] input Input value
+     * @return Output value
+     */
+    double apply(double desired_value, double input);
 
-    // Reset the PID controller
+    /**
+     * @brief Reset the PID controller
+     */
     void reset();
 };
 

@@ -173,6 +173,9 @@ public:
 
     /* ------------------------------- */
 
+    // Fonction pour calculer la valeur absolue de chaque élément du signal
+    Signal abs() const;
+
     // Fonction pour mettre au carré chaque élément du signal
     Signal square() const;
 
@@ -193,6 +196,8 @@ public:
 
     // Fonction pour calculer l'exponentielle de chaque élément du signal
     Signal exp() const;
+    
+    friend Signal abs(const Signal &input) { return input.abs(); }
 
     friend Signal square(const Signal &input) { return input.square(); }
 
@@ -246,10 +251,10 @@ public:
     /* ------------------------------- */
 
     /**
-     * Fonction pour effectuer la transformée de Fourier discrète rapide(DFT) et générer le spectre
-     * @param[out] output_spectrum Spectre de la transformée de Fourier discrète rapide(DFT)
+     * Fonction pour effectuer la transformée de Fourier discrète rapide(FFT) et générer le spectre
+     * @param[out] output_spectrum Spectre de la transformée de Fourier discrète rapide(FFT)
      */
-    void DFT(Spectrum &output_spectrum, size_t padded_size = 0, size_t sample_offset = 0) const;
+    void FFT(Spectrum &output_spectrum, size_t sample_offset = 0) const;
 
     /* ------------------------------- */
 
