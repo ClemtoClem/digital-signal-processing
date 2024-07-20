@@ -38,10 +38,10 @@ def fft(u,p):
     return A
 
 if __name__ == "__main__":
-    fichier_csv = "./data/test.csv"
+    fichier_csv = "./data/2024-7-20_15:15:16/test.csv"
 
     # Lecture des données à partir du fichier CSV
-    signals: dict = read_csv(fichier_csv)
+    signals, _ = read_csv(fichier_csv)
 
     time = signals["time"]
     signal = signals["signal(t)"]
@@ -49,15 +49,19 @@ if __name__ == "__main__":
     N = len(signal)
     P = numpy.int32(numpy.log2(N))
     fs = 1/time[1]
-    freq = []
+    freq = np.zeros(N)
     for k in range(N):
-        freq.append(fs*k/N)
+        freq[k] = fs*k/N
 
-    spectre = fft(signal,P)
+    spectre = np.array(fft(signal,P))
             
 
-    plt.figure(figsize=(10,4))
-    plt.plot(time, signal,'r')
-    plt.figure(figsize=(10,4))
-    plt.loglog(freq, spectre,'r')
+    # plt.figure(figsize=(10,4))
+    # plt.plot(time, signal,'r')
+    # plt.figure(figsize=(10,4))
+    # plt.loglog(freq, spectre,'r')
+
+    fig, ax = plt.subplots(figsize=(16/1.2, 9/1.8))
+    sigs = {'frequency':freq, 'spectrum':spectre}
+    plot_data(ax, sigs, "frequency", axis_form = "loglog", unit="k", usedColorMap=False)
     plt.show()

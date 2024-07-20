@@ -95,7 +95,7 @@ def plot_data(ax: plt.Axes, signals:dict, plot_type, axis_form="linear", title="
 	for idx, (name, signal) in enumerate(signals.items()):
 		if name != axis_type and name != axis_name:
 			if len(axis) == len(signal) and (name not in ignore_signals):
-				if axis_type == "freq":
+				if axis_type == "frequency":
 					signal = np.abs(signal) / len(signal)
 				if usedColorMap:
 					color = cmap(norm(idx))

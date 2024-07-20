@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) try {
     Demodulator dem(dem_filter_freq, oscillator_frequency);
     dem.setup();
 
-    dem.demodulate(signal_output, signal_demAmpli, signal_demPhase);
+    dem.apply(signal_output, signal_demAmpli, signal_demPhase);
     std::cerr << std::endl;
 
     std::cerr << "--------------- Calcul des FFT ---------------" << std::endl;

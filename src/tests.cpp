@@ -12,13 +12,14 @@ int test_simple(const std::vector<std::string> &args) {
 
 		WindowType window_type = WindowType::Rectangular;
 		WaveformType waveform_type = WaveformType::SINUS;
-		int    frequency = 10000;
+		int     frequency = 10000;
 		double  amplitude = 1.0;
-		double  offset = 0;
-		double  phase  = 0;
+		double  offset    = 0.0;
+		double  phase     = 0.0;
+		double  noise     = 0.0;
 		double  dutycycle = 0.5;
-		bool   hasSetDecimation = false;
-		int    points_per_period = 100;
+		bool    hasSetDecimation = false;
+		int     points_per_period = 100;
 
 		if (args.size() >= 1) {
 			for (auto param : args) {
@@ -41,6 +42,8 @@ int test_simple(const std::vector<std::string> &args) {
 					std::cerr << "      note: this argument is optional, and if not entered, the default value is " << offset << "." << std::endl;
 					std::cerr << "  phase=<value>\t\t\tph=<value>\t\t" << std::endl;
 					std::cerr << "      note: this argument is optional, and if not entered, the default value is " << phase << "." << std::endl;
+					std::cerr << "  noise=<value>\tns=<value>\t\t" << std::endl;
+					std::cerr << "      note: this argument is optional, and if not entered, the default value is " << noise << "." << std::endl;
 					std::cerr << "  dutycycle=<value>\tdc=<value>\t\t" << std::endl;
 					std::cerr << "  window=<string>\twin=<string>\t\t" << std::endl;
 					std::cerr << "      note: this argument is optional, and if not entered, the default value is " << windowTypeToString(window_type) << "." << std::endl;
@@ -75,6 +78,8 @@ int test_simple(const std::vector<std::string> &args) {
                             offset = std::stof(value);
                         } else if (name == "phase" || name == "ph") {
                             phase = std::stof(value);
+						} else if (name == "noise" || name == "ns") {
+                            noise = std::stof(value);
                         } else if (name == "dutycycle" || name == "dc") {
                             dutycycle = std::stof(value);
                         } else if (name == "window" || name == "win") {
@@ -108,6 +113,10 @@ int test_simple(const std::vector<std::string> &args) {
 
 		signal.generateWaveform(waveform_type, amplitude, frequency, phase, offset, 0, dutycycle*100);
 
+		WhiteNoise white_noise;
+		white_noise.setGain(noise);
+		signal = white_noise.apply(signal);
+
 
 		/* Initialisation de la fenêtre */
 		Window window;
@@ -123,6 +132,7 @@ int test_simple(const std::vector<std::string> &args) {
 		std::cerr << "frequency=" << frequency << std::endl;
 		std::cerr << "offset=" << offset << std::endl;
 		std::cerr << "phase=" << phase << std::endl;
+		std::cerr << "noise=" << noise << std::endl;
 		std::cerr << "dutycycle=" << dutycycle << std::endl;
 		std::cerr << "window=" << windowTypeToString(window_type) << std::endl;
 		double ppp = SAMPLING_FREQUENCY / static_cast<double>(frequency);
