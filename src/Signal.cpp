@@ -595,7 +595,7 @@ void Signal::FFT(Spectrum &output_spectrum, size_t sample_offset) const {
     }
     output_spectrum.resize(N);
     for (size_t k = 0; k < N; ++k) {
-        output_spectrum[k] = A[k]/2.0;
+        output_spectrum[k] = A[k];
     }
 #elif VERSION_FFT == 2
     // version 2

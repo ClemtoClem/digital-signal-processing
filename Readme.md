@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) try {
 
     size_t low_index, high_index;
     double T_per_period = 1.0 / s1_frequency;
-	float rising_time = signal_demAmpli.getRisingTime(low_index, high_index);
+	double rising_time = signal_demAmpli.getRisingTime(low_index, high_index);
     high_index = low_index + (rising_time/T_per_period) * 5;
 
     signal_output.FFT(spectrum_output);

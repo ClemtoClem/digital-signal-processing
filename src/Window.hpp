@@ -25,6 +25,9 @@ enum class WindowType {
     PlanckTaper
 };
 
+WindowType stringToWindowType(const std::string &str);
+std::string windowTypeToString(WindowType type);
+
 /**
  * @brief Window class for applying a window to a signal
  */
@@ -39,7 +42,7 @@ public:
      * @param[in] sample_offset Offset of the window in the signal, reduce the size of the window by this value in the beginning and in the end
      * @param[in] alpha Parameter of the window Tukey and PlanckTaper
      */
-    bool set(WindowType type, size_t size, size_t sample_offset = 0, float alpha = 0.5);
+    bool set(WindowType type, size_t size, size_t sample_offset = 0, double alpha = 0.5);
 
     /**
      * @brief Set the window type
@@ -65,7 +68,7 @@ public:
      * @param[in] alpha Parameter of the window Tukey and PlanckTaper
      * @details The default value is 0.5
      */
-    void setAlpha(float alpha = 0.5);
+    void setAlpha(double alpha = 0.5);
 
     /**
      * @brief Get the window type
@@ -89,7 +92,7 @@ public:
      * @brief Get the alpha parameter
      * @return Alpha parameter
      */
-    float getAlpha() const { return _alpha; }
+    double getAlpha() const { return _alpha; }
 
     /**
      * @brief Check if the window is setup
@@ -120,7 +123,7 @@ private:
     WindowType _type;
     size_t _size;
     size_t _sample_offset; // décalage de la fenêtre
-    float _alpha; // pour la fenêtre Tukey et PlanckTaper
+    double _alpha; // pour la fenêtre Tukey et PlanckTaper
     bool _isSetup;
 };
 

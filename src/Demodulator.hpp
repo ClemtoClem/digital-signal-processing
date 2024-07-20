@@ -9,8 +9,11 @@ class Signal;
 
 class Demodulator {
 public:
+	Demodulator();
 	Demodulator(double freq_filter, double freq_oscillator);
-    void setup();
+
+	bool set(double freq_filter, double freq_oscillator);
+	void setup();
 
 	/**
 	 * @brief Demodulate a signal
@@ -19,10 +22,11 @@ public:
 	 * @param outputPhase Output signal containing phase of the signal
 	 * @param rms If true, output amplitude will be the RMS value of the signal
 	 */
-	void demodulate(Signal &signal, Signal &outputAmplitude, Signal &outputPhase, bool rms = false);
+	void apply(Signal &signal, Signal &outputAmplitude, Signal &outputPhase, bool rms = false);
 private:
 	double _freqFilter, _freqOscillator;
-    IIRFilter _filter;
+	IIRFilter _filter;
+	bool _isSetup;
 };
 
 #endif // __DEMODULATOR_HPP

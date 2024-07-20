@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 from parseCSV import *
 
 if __name__ == "__main__":
-    # Spécifiez le chemin vers votre fichier CSV
-    fichier_csv = "./data/test_FFT_signal.csv"
-    
-    # Lecture des données à partir du fichier CSV
-    signals: dict = read_csv(fichier_csv)
+	folder = "./data/2024-7-20_13:46:13/"
+	fichier_csv = folder+"test_spectrum_FFT.csv"
+	
+	# Lecture des données à partir du fichier CSV
+	fft_signals, _ = read_csv(fichier_csv)
 
-    # Appel de la fonction pour tracer les données
-    ax = plt.subplot(111)
-    plot_data(ax, signals, "Frequency", axis_form = "loglog", title = "Transformée de fourirer discrète du signal")
-    plt.show()
+	ignore_signals = []
+
+	# Appel de la fonction pour tracer les données
+	fig, ax = plt.subplots(figsize=(16/1.2, 9/1.8))
+	plot_data(ax, fft_signals, "frequency", axis_form = "loglog", unit="k", usedColorMap=False, ignore_signals = ignore_signals)
+	plt.show()

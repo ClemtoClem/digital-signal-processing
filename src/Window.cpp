@@ -1,8 +1,84 @@
 #include "Window.hpp"
 
+
+
+WindowType stringToWindowType(const std::string &str) {
+	WindowType type = WindowType::Rectangular;
+	if (str.size() == 0) {
+		return type;
+	}
+	std::string s = str;
+	for (size_t i = 0; i < s.size(); ++i) {
+		if (s[i] <= 'Z' && s[i] >= 'A') {
+			s[i] = s[i] + 32;
+		}
+	}
+	if (s == "rectangular") {
+		type = WindowType::Rectangular;
+	} else if (s == "triangular") {
+		type = WindowType::Triangular;
+	} else if (s == "parzen") {
+		type = WindowType::Parzen;
+	} else if (s == "welch") {
+		type = WindowType::Welch;
+	} else if (s == "sine") {
+		type = WindowType::Sine;
+	} else if (s == "hann") {
+		type = WindowType::Hann;
+	} else if (s == "hamming") {
+		type = WindowType::Hamming;
+	} else if (s == "blackman") {
+		type = WindowType::Blackman;
+	} else if (s == "nuttall") {
+		type = WindowType::Nuttall;
+	} else if (s == "blackman-nuttall" || s == "blackmannuttall") {
+		type = WindowType::BlackmanNuttall;
+	} else if (s == "blackman-harris" || s == "blackmanharris") {
+		type = WindowType::BlackmanHarris;
+	} else if (s == "tukey") {
+		type = WindowType::Tukey;
+	} else if (s == "planck-taper" || s == "plancktaper") {
+		type = WindowType::PlanckTaper;
+	}
+	return type;
+}
+
+std::string windowTypeToString(WindowType type) {
+	switch (type) {
+		case WindowType::Rectangular:
+			return "Rectangular";
+		case WindowType::Triangular:
+			return "Triangular";
+		case WindowType::Parzen:
+			return "Parzen";
+		case WindowType::Welch:
+			return "Welch";
+		case WindowType::Sine:
+			return "Sine";
+		case WindowType::Hann:
+			return "Hann";
+		case WindowType::Hamming:
+			return "Hamming";
+		case WindowType::Blackman:
+			return "Blackman";
+		case WindowType::Nuttall:
+			return "Nuttall";
+		case WindowType::BlackmanNuttall:
+			return "BlackmanNuttall";
+		case WindowType::BlackmanHarris:
+			return "BlackmanHarris";
+		case WindowType::Tukey:
+			return "Tukey";
+		case WindowType::PlanckTaper:
+			return "PlanckTaper";
+		default:
+			return "Unknown";
+	}
+}
+
 Window::Window() : _isSetup(false) {}
 
-bool Window::set(WindowType type, size_t size, size_t sample_offset, float alpha) {
+bool Window::set(WindowType type, size_t size, size_t sample_offset, double alpha) {
     if (size < 1) {
         std::cerr << "Window _size must be at least 1" << std::endl;
         return false;
@@ -30,7 +106,7 @@ void Window::setSampleOffset(size_t sample_offset) {
     _isSetup = false;
 }
 
-void Window::setAlpha(float alpha) {
+void Window::setAlpha(double alpha) {
     _alpha = alpha;
     _isSetup = false;
 }

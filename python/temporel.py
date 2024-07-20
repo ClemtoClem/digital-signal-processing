@@ -3,13 +3,16 @@ import matplotlib.pyplot as plt
 from parseCSV import *
 
 if __name__ == "__main__":
-    # Spécifiez le chemin vers votre fichier CSV
-    fichier_csv = "./data/test_temporel.csv"
-    
-    # Lecture des données à partir du fichier CSV
-    signals: dict = read_csv(fichier_csv)
+	folder = "./data/2024-7-20_13:46:13/"
+	fichier_csv = folder+"test_spectrum_signals.csv"
+	
+	# Lecture des données à partir du fichier CSV
+	signals, _ = read_csv(fichier_csv)
 
-    # Appel de la fonction pour tracer les données
-    ax = plt.subplot(111)
-    plot_data(ax, signals, "Time", axis_form = "linear", title = "Affichage des signaux", unit="m")
-    plt.show()
+	ignore_signals = []
+
+	# Appel de la fonction pour tracer les données
+	fig, ax = plt.subplots(figsize=(16/1.2, 9/1.8))
+	plot_data(ax, signals, "time", axis_form = "linear", title = "Affichage des signal", unit="m", usedColorMap=False, ignore_signals=ignore_signals)
+	plt.tight_layout()
+	plt.show()

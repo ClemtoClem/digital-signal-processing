@@ -7,7 +7,7 @@
 
 using complexd = std::complex<double>;
 
-inline const int BITS_PER_SAMPLE = 14;
+inline const int BITS_PER_SAMPLE = 16;
 inline int DECIMATION = 16;
 inline int MAX_SAMPLING_FREQUENCY = 125e6;
 inline double SAMPLING_FREQUENCY = static_cast<double>(MAX_SAMPLING_FREQUENCY) / DECIMATION;
