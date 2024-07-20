@@ -6,15 +6,15 @@ from parseCSV import *
 
 
 def plot_filter(ax: plt.Axes, fc, Q=0.5, A=1, fmin=10, fmax=100000, num_points=16384, title="Filtre"):
-    # Calculate the filter
-    freqs = np.logspace(np.log10(fmin), np.log10(fmax), num_points)
-    filter = np.zeros(len(freqs))
+	# Calculate the filter
+	freqs = np.logspace(np.log10(fmin), np.log10(fmax), num_points)
+	filter = np.zeros(len(freqs))
 
-    for i in range(len(freqs)):
-        filter[i] = A * (fc ** 2) / np.sqrt((fc ** 2 - freqs[i] ** 2) ** 2 + (freqs[i] * fc / Q) ** 2)
+	for i in range(len(freqs)):
+		filter[i] = A * (fc ** 2) / np.sqrt((fc ** 2 - freqs[i] ** 2) ** 2 + (freqs[i] * fc / Q) ** 2)
 
-    # Plot the filter
-    ax.loglog(freqs, filter, label=title + f" Q={Q} fc={fc} A={A}")
+	# Plot the filter
+	ax.loglog(freqs, filter, label=title + f" Q={Q} fc={fc} A={A}")
 
 def calculate_rise_time(time, signal):
 	# Définir les seuils bas et haut
@@ -97,14 +97,16 @@ def change_plot(direction):
 		
 	plt.draw()  # Rafraîchir l'écran
 
-folder = "./data/2024-7-20_14:57:50/"
+folder = "./data/"
+folder += input("Nom dossier contenant les fichiers CSV : ")
+folder += "/"
 
 # Nom du fichier CSV contenant les signaux
-filename1 = folder + 'test_demodulation_signals.csv'
+filename1 = folder + 'signals.csv'
 
 # Nom du fichier CSV contenant les FFT
-fft_filename1 = folder + 'test_demodulation_FFT_signal.csv'
-fft_filename2 = folder + 'test_demodulation_FFT_amplitude.csv'
+fft_filename1 = folder + 'spectrums.csv'
+fft_filename2 = folder + 'spectrums_amplitudes.csv'
 
 # Lecture des signaux à partir du fichier CSV
 signals, _ = read_csv(filename1)

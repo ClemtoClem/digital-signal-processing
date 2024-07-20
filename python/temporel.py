@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 from parseCSV import *
 
 if __name__ == "__main__":
-	folder = "./data/2024-7-20_15:15:16/"
-	fichier_csv = folder+"test.csv"
+	folder = "./data/"
+	folder += input("Nom dossier contenant les fichiers CSV : ")
+	folder += "/"
+	fichier_csv = folder+"signals.csv"
 	
 	# Lecture des données à partir du fichier CSV
 	signals, _ = read_csv(fichier_csv)

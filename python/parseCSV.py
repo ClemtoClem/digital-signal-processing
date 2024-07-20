@@ -4,42 +4,42 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 def read_csv(filename, axis_name=""):
-    """
-    Fonction pour lire un fichier CSV et le convertir en dictionnaire
-    :param filename: Le chemin vers le fichier CSV
-    :param typePlot: Le type de graphique à tracer (time, freq, ...)
-    :return: Un dictionnaire avec les titres comme clés et les données comme valeurs
-    """
+	"""
+	Fonction pour lire un fichier CSV et le convertir en dictionnaire
+	:param filename: Le chemin vers le fichier CSV
+	:param typePlot: Le type de graphique à tracer (time, freq, ...)
+	:return: Un dictionnaire avec les titres comme clés et les données comme valeurs
+	"""
 
-    signals = {}
-    titles = []
+	signals = {}
+	titles = []
 
-    with open(filename, 'r') as file:
-        lines = file.readlines()
+	with open(filename, 'r') as file:
+		lines = file.readlines()
 
-        # Les lignes suivantes contiennent les valeurs des signaux
-        for line in lines:
-            values = line.split(",")
-            title = values[0].strip()  # Supprimer les espaces autour du titre
-            signals[title] = []
-            titles.append(title)
+		# Les lignes suivantes contiennent les valeurs des signaux
+		for line in lines:
+			values = line.split(",")
+			title = values[0].strip()  # Supprimer les espaces autour du titre
+			signals[title] = []
+			titles.append(title)
 
-            # Conversion des données en float ou en complex
-            for val in values[1:]:
-                val = val.strip()  # Supprimer les espaces autour de la valeur
-                try:
-                    if title == axis_name or 'j' not in val:
-                        signals[title].append(float(val))
-                    else:
-                        signals[title].append(complex(val))
-                except ValueError:
-                    signals[title].append(0)
+			# Conversion des données en float ou en complex
+			for val in values[1:]:
+				val = val.strip()  # Supprimer les espaces autour de la valeur
+				try:
+					if title == axis_name or 'j' not in val:
+						signals[title].append(float(val))
+					else:
+						signals[title].append(complex(val))
+				except ValueError:
+					signals[title].append(0)
 
-    # Conversion des listes en arrays numpy
-    for key, value in signals.items():
-        signals[key] = np.array(value)
+	# Conversion des listes en arrays numpy
+	for key, value in signals.items():
+		signals[key] = np.array(value)
 
-    return signals, titles
+	return signals, titles
 
 def plot_data(ax: plt.Axes, signals:dict, plot_type, axis_form="linear", title="", ignore_signals=[], unit="", 
 			  title_fontsize=16, axis_label_fontsize=14, tick_label_fontsize=14, usedColorMap = False, axis_name=""):

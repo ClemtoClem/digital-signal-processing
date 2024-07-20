@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from parseCSV import *
 
 if __name__ == "__main__":
-	folder = "./data/2024-7-20_15:15:16/"
-	fichier_csv = folder+"test_FFT.csv"
+	folder = input("Nom dossier contenant les fichiers CSV : ")
+	fichier_csv = "./data/" + folder + "/spectrums.csv"
 	
 	# Lecture des données à partir du fichier CSV
 	fft_signals, _ = read_csv(fichier_csv)

@@ -4,22 +4,22 @@
 std::string CSVFile::DEFAULT_FILEPATH = "./data/";
 std::string CSVFile::FILEPATH = CSVFile::DEFAULT_FILEPATH;
 
-std::vector<double> calculate_frequency_axis(size_t n, double d) {
-    if (n == 0) {
+std::vector<double> calculate_frequency_axis(size_t N, double d) {
+    if (N == 0) {
         throw std::invalid_argument("The number of points must be greater than 0");
     }
     if (d <= 0.0) {
         throw std::invalid_argument("The frequency step must be greater than 0");
     }
-    std::vector<double> freqs(n);
-    double val = 1.0 / (n * d); // Frequency step
-    size_t N = (n - 1) / 2 + 1;
+    std::vector<double> freqs(N);
+    double val = 1.0 / (N * d); // Frequency step
+    size_t n = (N - 1) / 2 + 1;
 
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         freqs[i] = i * val;
     }
 
-    for (size_t i = N; i < n; ++i) {
+    for (size_t i = n; i < N; ++i) {
         freqs[i] = (static_cast<double>(i) - static_cast<double>(n)) * val;
     }
 
@@ -204,7 +204,7 @@ void CSVFile::writeSpectrums(const std::vector<Spectrum> &spectrums, bool axis, 
     if (axis) {
         _fileStream << "frequency";
 		for (size_t i = 0; i < n; i++) {
-			_fileStream << "," << static_cast<double>(i) / SAMPLING_FREQUENCY;
+			_fileStream << "," << frequencies[i];
 		}
     	_fileStream << "\n";
     }

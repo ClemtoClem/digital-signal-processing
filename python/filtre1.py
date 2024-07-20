@@ -37,7 +37,7 @@ s_pb.append(0)
 
 # Application du filtre
 for i in range(1, len(sig)):
-    s_pb.append(s_pb[i-1]+Te/tau*(sig[i-1]-s_pb[i-1]))
+	s_pb.append(s_pb[i-1]+Te/tau*(sig[i-1]-s_pb[i-1]))
 
 # Préparation du filtre de Butterworth en passe-low
 b, a = signal.iirfilter(4, Wn=fc, fs=fe, btype="low", ftype="butter")
@@ -52,7 +52,7 @@ s_ph.append(0)
 
 # Application du filtre
 for i in range(1, len(sig)):
-    s_ph.append(s_ph[i-1]*(1-Te/tau)+sig[i]-sig[i-1])
+	s_ph.append(s_ph[i-1]*(1-Te/tau)+sig[i]-sig[i-1])
 
 # Préparation du filtre de Butterworth en passe-haut
 b, a = signal.iirfilter(4, Wn=fc, fs=fe, btype="high", ftype="butter")
@@ -61,85 +61,85 @@ b, a = signal.iirfilter(4, Wn=fc, fs=fe, btype="high", ftype="butter")
 s_but_ph = signal.filtfilt(b, a, sig)
 
 def plot_signals(axis):
-    # Affichage du signal filtré
-    axis[0].plot(x, sig, color='silver', label='Signal')
-    axis[0].plot(x, s_pb, label='1er ordre')
-    axis[0].plot(x, s_but_pb, color='#cc0000', label='Butterworth')
-    axis[0].set_title("Filtre passe-bas numérique")
+	# Affichage du signal filtré
+	axis[0].plot(x, sig, color='silver', label='Signal')
+	axis[0].plot(x, s_pb, label='1er ordre')
+	axis[0].plot(x, s_but_pb, color='#cc0000', label='Butterworth')
+	axis[0].set_title("Filtre passe-bas numérique")
 
-    axis[1].plot(x, sig, color='silver', label='Signal')
-    axis[1].plot(x, s_ph, label='1er ordre')
-    axis[1].plot(x, s_but_ph, color='#cc0000', label='Butterworth')
-    axis[1].set_title("Filtre passe-haut numérique")
+	axis[1].plot(x, sig, color='silver', label='Signal')
+	axis[1].plot(x, s_ph, label='1er ordre')
+	axis[1].plot(x, s_but_ph, color='#cc0000', label='Butterworth')
+	axis[1].set_title("Filtre passe-haut numérique")
 
 def plot_frequency(axis):
-    # Affichage du signal filtré en fréquence
+	# Affichage du signal filtré en fréquence
 
-    w = np.fft.fftfreq(N, d=Te)
+	w = np.fft.fftfreq(N, d=Te)
 
-    H_pb = np.fft.fft(s_pb, N)
-    H_but_b = np.fft.fft(s_but_pb, N)
-    
-    axis[0].plot(w[:N//2], 20*np.log10(np.abs(H_pb)[:N//2]), label='1er ordre')
-    axis[0].plot(w[:N//2], 20*np.log10(np.abs(H_but_b)[:N//2]), color='#cc0000', label='Butterworth')
-    axis[0].grid(True, which='both')
-    axis[0].set_xlabel("Frequence [Hz]")
-    axis[0].set_ylabel("Module $H(e^{j\omega})\ en\ dB$")
-    axis[0].set_title("Filtre passe-bas numérique")
+	H_pb = np.fft.fft(s_pb, N)
+	H_but_b = np.fft.fft(s_but_pb, N)
+	
+	axis[0].plot(w[:N//2], 20*np.log10(np.abs(H_pb)[:N//2]), label='1er ordre')
+	axis[0].plot(w[:N//2], 20*np.log10(np.abs(H_but_b)[:N//2]), color='#cc0000', label='Butterworth')
+	axis[0].grid(True, which='both')
+	axis[0].set_xlabel("Frequence [Hz]")
+	axis[0].set_ylabel("Module $H(e^{j\omega})\ en\ dB$")
+	axis[0].set_title("Filtre passe-bas numérique")
 
-    axis[1].plot(w[:N//2], np.unwrap(np.angle(H_pb)[:N//2]), label='1er ordre')
-    axis[1].plot(w[:N//2], np.unwrap(np.angle(H_but_b)[:N//2]), color='#cc0000', label='Butterworth')
-    axis[1].grid(True, which='both')
-    axis[1].set_xlabel("Frequence [Hz]")
-    axis[1].set_ylabel("Phase $H(e^{j\omega})\ en\ rad$")
-    axis[1].set_title("Filtre passe-bas numérique")
+	axis[1].plot(w[:N//2], np.unwrap(np.angle(H_pb)[:N//2]), label='1er ordre')
+	axis[1].plot(w[:N//2], np.unwrap(np.angle(H_but_b)[:N//2]), color='#cc0000', label='Butterworth')
+	axis[1].grid(True, which='both')
+	axis[1].set_xlabel("Frequence [Hz]")
+	axis[1].set_ylabel("Phase $H(e^{j\omega})\ en\ rad$")
+	axis[1].set_title("Filtre passe-bas numérique")
 
-    H_ph = np.fft.fft(s_ph, N)
-    H_but_h = np.fft.fft(s_but_ph, N)
-    
-    axis[2].plot(w[:N//2], 20*np.log10(np.abs(H_ph)[:N//2]), label='1er ordre')
-    axis[2].plot(w[:N//2], 20*np.log10(np.abs(H_but_h)[:N//2]), color='#cc0000', label='Butterworth')
-    axis[2].grid(True, which='both')
-    axis[2].set_xlabel("Frequence [Hz]")
-    axis[2].set_ylabel("Module $H(e^{j\omega})\ en\ dB$")
-    axis[2].set_title("Filtre passe-haut numérique")
+	H_ph = np.fft.fft(s_ph, N)
+	H_but_h = np.fft.fft(s_but_ph, N)
+	
+	axis[2].plot(w[:N//2], 20*np.log10(np.abs(H_ph)[:N//2]), label='1er ordre')
+	axis[2].plot(w[:N//2], 20*np.log10(np.abs(H_but_h)[:N//2]), color='#cc0000', label='Butterworth')
+	axis[2].grid(True, which='both')
+	axis[2].set_xlabel("Frequence [Hz]")
+	axis[2].set_ylabel("Module $H(e^{j\omega})\ en\ dB$")
+	axis[2].set_title("Filtre passe-haut numérique")
 
-    axis[3].plot(w[:N//2], np.unwrap(np.angle(H_ph)[:N//2]), label='1er ordre')
-    axis[3].plot(w[:N//2], np.unwrap(np.angle(H_but_h)[:N//2]), color='#cc0000', label='Butterworth')
-    axis[3].grid(True, which='both')
-    axis[3].set_xlabel("Frequence [Hz]")
-    axis[3].set_ylabel("Phase $H(e^{j\omega})\ en\ rad$")
-    axis[3].set_title("Filtre passe-haut numérique")
+	axis[3].plot(w[:N//2], np.unwrap(np.angle(H_ph)[:N//2]), label='1er ordre')
+	axis[3].plot(w[:N//2], np.unwrap(np.angle(H_but_h)[:N//2]), color='#cc0000', label='Butterworth')
+	axis[3].grid(True, which='both')
+	axis[3].set_xlabel("Frequence [Hz]")
+	axis[3].set_ylabel("Phase $H(e^{j\omega})\ en\ rad$")
+	axis[3].set_title("Filtre passe-haut numérique")
 
 # Fonction pour basculer entre l'affichage des signaux et des FFT
 def toggle_plot(event):
-    global current_plot_index
-    current_plot_index = 1-current_plot_index
+	global current_plot_index
+	current_plot_index = 1-current_plot_index
 
-    if current_plot_index == 0:
-        for ax in axis_B:
-            ax.clear()
-        plot_signals(axis_A)
-        for ax in axis_B:
-            ax.set_visible(False)
-        for ax in axis_A:
-            ax.set_visible(True)
-            ax.legend()
-            ax.grid(True, which='both')
-        toggle_button.label.set_text("Voir FFT")
-    else:
-        for ax in axis_A:
-            ax.clear()
-        plot_frequency(axis_B)
-        for ax in axis_A:
-            ax.set_visible(False)
-        for ax in axis_B:
-            ax.set_visible(True)
-            ax.legend()
-            ax.grid(True, which='both')
-        toggle_button.label.set_text("Voir signaux")
-    
-    plt.draw()  # Rafraîchir l'écran
+	if current_plot_index == 0:
+		for ax in axis_B:
+			ax.clear()
+		plot_signals(axis_A)
+		for ax in axis_B:
+			ax.set_visible(False)
+		for ax in axis_A:
+			ax.set_visible(True)
+			ax.legend()
+			ax.grid(True, which='both')
+		toggle_button.label.set_text("Voir FFT")
+	else:
+		for ax in axis_A:
+			ax.clear()
+		plot_frequency(axis_B)
+		for ax in axis_A:
+			ax.set_visible(False)
+		for ax in axis_B:
+			ax.set_visible(True)
+			ax.legend()
+			ax.grid(True, which='both')
+		toggle_button.label.set_text("Voir signaux")
+	
+	plt.draw()  # Rafraîchir l'écran
 
 # Création de la figure et des sous-graphiques
 fig, ax = plt.subplots(2, 2)

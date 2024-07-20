@@ -145,13 +145,13 @@ int test_simple(const std::vector<std::string> &args) {
 
 		std::cerr << "---- Save data ----" << std::endl;
 		CSVFile::setTimeToFilepath();
-		std::string filename = "test.csv";
+		std::string filename = "signals.csv";
 		std::cerr << "File: " << filename << std::endl;
 		CSVFile outFile1(filename);
 		std::vector<Signal> outSig = {signal};
 		outFile1.writeSignals(outSig, true);
 
-		filename = "test_FFT.csv";
+		filename = "spectrums.csv";
 		std::cerr << "File: " << filename << std::endl;
 		CSVFile outFile2(filename);
 		std::vector<Spectrum> outSpec = {spectrum};
@@ -355,16 +355,15 @@ int test_spectrum(const std::vector<std::string> &args)
 		/* - - - - - - - - - - - - - - - - - - - - - - - */
 		/* Sauvgarde des résultats */
 		CSVFile::setTimeToFilepath();
-		std::string filename = "test_spectrum";
 
 		std::cerr << "+--------------- Write results ---------------+" << std::endl;
-		std::cerr << "| File: " << std::setw(27) << filename << "_signals.csv |" << std::endl;
-		CSVFile outFile1(filename+"_signals.csv");
+		std::cerr << "| File: " << std::setw(27) << "signals.csv |" << std::endl;
+		CSVFile outFile1("signals.csv");
 		std::vector<Signal> outSpSig = {signal};
 		outFile1.writeSignals(outSpSig, true);
 
-		std::cerr << "| File: " << std::setw(23) << filename << "_FFT.csv |" << std::endl;
-		CSVFile outFile6(filename+"_FFT.csv");
+		std::cerr << "| File: " << std::setw(23) << "spectrums.csv |" << std::endl;
+		CSVFile outFile6("spectrums.csv");
 		std::vector<Spectrum> outSpectrum = {spectrum};
 		outFile6.writeSpectrums(outSpectrum, true);
 		std::cerr << "+----------------------------------------------+" << std::endl << std::endl;
@@ -598,21 +597,20 @@ int test_demodulation(const std::vector<std::string> &args) {
 		/* Sauvgarde des signaux */
 
 		CSVFile::setTimeToFilepath();
-		std::string filename = "test_demodulation";
 
 		std::cerr << "+--------------- Write results ---------------+" << std::endl;
-		std::cerr << "| File: " << std::setw(27) << filename << "_signals.csv |" << std::endl;
-		CSVFile outFile1(filename+"_signals.csv");
+		std::cerr << "| File: " << std::setw(27) << "signals.csv |" << std::endl;
+		CSVFile outFile1("signals.csv");
 		std::vector<Signal> outSpSig = {signal, windowedSignal, signal_demAmpli, signal_demPhase};
 		outFile1.writeSignals(outSpSig, true);
 
-		std::cerr << "| File: " << std::setw(23) << filename << "_FFT_signal.csv |" << std::endl;
-		CSVFile outFile2(filename+"_FFT_signal.csv");
+		std::cerr << "| File: " << std::setw(23) << "spectrums.csv |" << std::endl;
+		CSVFile outFile2("spectrums.csv");
 		std::vector<Spectrum> outSpectrum = {spectrum};
 		outFile2.writeSpectrums(outSpectrum, true, false);
 
-		std::cerr << "| File: " << std::setw(20) << filename << "_FFT_amplitude.csv |" << std::endl;
-		CSVFile outFile3(filename+"_FFT_amplitude.csv");
+		std::cerr << "| File: " << std::setw(20) << "spectrums_amplitudes.csv |" << std::endl;
+		CSVFile outFile3("spectrums_amplitudes.csv");
 		std::vector<Spectrum> outSpectrum2 = {spectrum_demAmpli};
 		outFile3.writeSpectrums(outSpectrum2, true, false);
 		std::cerr << "+----------------------------------------------+" << std::endl << std::endl;
@@ -856,27 +854,25 @@ int test_demodulation2(const std::vector<std::string> &args) {
 
 
 		CSVFile::setTimeToFilepath();
-		std::string filename = "test_demodulation2";
-
 		std::cerr << "+--------------- Write results ---------------+" << std::endl;
-		std::cerr << "| File: " << std::setw(26) << filename << "_signals.csv |" << std::endl;
-		CSVFile outFile1(filename+"_signals.csv");
+		std::cerr << "| File: " << std::setw(26) << "signals.csv |" << std::endl;
+		CSVFile outFile1("signals.csv");
 		outFile1.writeSignals(outSig, true);
 
-		std::cerr << "| File: " << std::setw(23) << filename << "_amplitudes.csv |" << std::endl;
-		CSVFile outFile2(filename+"_amplitudes.csv");
+		std::cerr << "| File: " << std::setw(23) << "signals_amplitudes.csv |" << std::endl;
+		CSVFile outFile2("signals_amplitudes.csv");
 		outFile2.writeSignals(outAmp, true);
 
-		std::cerr << "| File: " << std::setw(27) << filename << "_phases.csv |" << std::endl;
-		CSVFile outFile3(filename+"_phases.csv");
+		std::cerr << "| File: " << std::setw(27) << "signals_phases.csv |" << std::endl;
+		CSVFile outFile3("signals_phases.csv");
 		outFile3.writeSignals(outPha, true);
 
-		std::cerr << "| File: " << std::setw(22) << filename << "_FFT_signals.csv |" << std::endl;
-		CSVFile outFile6(filename+"_FFT_signals.csv");
+		std::cerr << "| File: " << std::setw(22) << "spectrums.csv |" << std::endl;
+		CSVFile outFile6("spectrums.csv");
 		outFile6.writeSpectrums(outSpSig, true);
 
-		std::cerr << "| File: " << std::setw(19) << filename << "_FFT_amplitudes.csv |" << std::endl;
-		CSVFile outFile4(filename+"_FFT_amplitudes.csv");
+		std::cerr << "| File: " << std::setw(19) << "spectrums_amplitudes.csv |" << std::endl;
+		CSVFile outFile4("spectrums_amplitudes.csv");
 		outFile4.writeSpectrums(outSpAmp, true);
 		std::cerr << "+----------------------------------------------+" << std::endl << std::endl;
 
