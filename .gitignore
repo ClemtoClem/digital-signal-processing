@@ -1,8 +1,4 @@
 /.vscode
-/python/filter2.py
-/python/fir.py
-/python/fir2.py
-/python/iir.py
-/python/iir2.py
 /build
 /bin
+/data
